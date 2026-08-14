@@ -1,0 +1,23 @@
+# Render blueprint. Chosen over Railway and Fly.io for this service because a
+# Dockerfile plus a health check is the whole deployment, and Render needs no
+# CLI login to create the service from a repository.
+#
+# `plan: starter` rather than `free`: the free tier sleeps, and an 86 MB model
+# reload on wake would put a reviewer in front of a spinner.
+
+services:
+  - type: web
+    name: wayfinder-preview
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      # This service holds no secrets. Every variable here is public by nature.
+      - key: PORT
+        value: 8080
+      - key: MODELS_CACHE_DIR
+        value: /app/.models-cache
+      - key: MODEL_LOAD_TIMEOUT_MS
+        value: 180000

@@ -1,0 +1,360 @@
+{
+  "schemaVersion": 1,
+  "builtAt": "2026-08-14T10:17:23.326Z",
+  "coreCommit": "762c6e60dee76f47283e38e1f6928429e95f4f84",
+  "provenance": {
+    "note": "Every listing was cataloged by a real settled payment in a recorded Stellar testnet run. Resource URLs are the local origins those runs used and are preserved verbatim; they are not public endpoints.",
+    "httpRun": {
+      "artifact": "artifacts/e2e/stellar-testnet-bazaar-search.json",
+      "evidence": "E-12, E-13",
+      "asset": "native XLM Stellar Asset Contract",
+      "resources": 6
+    },
+    "mcpRun": {
+      "artifact": "artifacts/e2e/mcp-discovery-pay-call.json",
+      "evidence": "E-22…E-25",
+      "asset": "canonical testnet USDC",
+      "resources": 1
+    }
+  },
+  "listings": [
+    {
+      "canonicalKey": "http://127.0.0.1:4413/weather/forecast",
+      "type": "http",
+      "resource": "http://127.0.0.1:4413/weather/forecast",
+      "method": "GET",
+      "serviceName": "Weather Forecast",
+      "description": "Short-range weather forecast for a city. Returns temperature, precipitation probability, wind speed and conditions for the next 48 hours.",
+      "tags": [
+        "weather",
+        "forecast",
+        "rain"
+      ],
+      "mimeType": "application/json",
+      "discoveryInfo": {
+        "input": {
+          "type": "http",
+          "method": "GET",
+          "queryParams": {
+            "city": "Medellin"
+          }
+        },
+        "output": {
+          "type": "json",
+          "example": {
+            "city": "Medellin",
+            "temperature": 22,
+            "unit": "C",
+            "rainChance": 0.4
+          }
+        }
+      },
+      "extensions": {
+        "bazaar": {}
+      },
+      "payTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "network": "stellar:testnet",
+      "scheme": "exact",
+      "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "amount": "10000",
+      "x402Version": 2,
+      "ownerPayTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "ownershipBinding": "tofu",
+      "firstSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSettlementTx": "f2d314684a2ff1470876f4f7ae8287b7a7e0897b0172ae885de779a606488e59",
+      "metadataVersion": 1
+    },
+    {
+      "canonicalKey": "http://127.0.0.1:4413/weather/history",
+      "type": "http",
+      "resource": "http://127.0.0.1:4413/weather/history",
+      "method": "GET",
+      "serviceName": "Historical Weather",
+      "description": "Historical weather observations for a location and date range. Daily aggregates of temperature, rainfall and wind going back thirty years.",
+      "tags": [
+        "weather",
+        "historical",
+        "climate"
+      ],
+      "mimeType": "application/json",
+      "discoveryInfo": {
+        "input": {
+          "type": "http",
+          "method": "GET",
+          "queryParams": {
+            "city": "Medellin",
+            "from": "2025-01-01"
+          }
+        },
+        "output": {
+          "type": "json",
+          "example": {
+            "city": "Medellin",
+            "meanTemperature": 21.4,
+            "totalRainfallMm": 88
+          }
+        }
+      },
+      "extensions": {
+        "bazaar": {}
+      },
+      "payTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "network": "stellar:testnet",
+      "scheme": "exact",
+      "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "amount": "10000",
+      "x402Version": 2,
+      "ownerPayTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "ownershipBinding": "tofu",
+      "firstSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSettlementTx": "cef5279fe5549c51c1d8f60a0d80e70714fd9d4fcc2627b3fd97b4169c3edf54",
+      "metadataVersion": 1
+    },
+    {
+      "canonicalKey": "http://127.0.0.1:4413/weather/alerts",
+      "type": "http",
+      "resource": "http://127.0.0.1:4413/weather/alerts",
+      "method": "GET",
+      "serviceName": "Severe Weather Alerts",
+      "description": "Active severe weather warnings and advisories issued by national meteorological agencies for a region. Covers storms, floods, heat and wind.",
+      "tags": [
+        "weather",
+        "alerts",
+        "storm",
+        "safety"
+      ],
+      "mimeType": "application/json",
+      "discoveryInfo": {
+        "input": {
+          "type": "http",
+          "method": "GET",
+          "queryParams": {
+            "region": "CO"
+          }
+        },
+        "output": {
+          "type": "json",
+          "example": {
+            "region": "CO",
+            "alerts": [],
+            "severity": "none"
+          }
+        }
+      },
+      "extensions": {
+        "bazaar": {}
+      },
+      "payTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "network": "stellar:testnet",
+      "scheme": "exact",
+      "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "amount": "10000",
+      "x402Version": 2,
+      "ownerPayTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "ownershipBinding": "tofu",
+      "firstSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSettlementTx": "4686c7c642d56fce5f6bc3e2a9e164d386542ad4ab79a2a7663bed173062b11c",
+      "metadataVersion": 1
+    },
+    {
+      "canonicalKey": "http://127.0.0.1:4413/translate/text",
+      "type": "http",
+      "resource": "http://127.0.0.1:4413/translate/text",
+      "method": "GET",
+      "serviceName": "Text Translation",
+      "description": "Translate short text between one hundred languages. Automatic source language detection, formal and informal register options.",
+      "tags": [
+        "translation",
+        "language",
+        "nlp"
+      ],
+      "mimeType": "application/json",
+      "discoveryInfo": {
+        "input": {
+          "type": "http",
+          "method": "GET",
+          "queryParams": {
+            "text": "hello",
+            "target": "es"
+          }
+        },
+        "output": {
+          "type": "json",
+          "example": {
+            "translated": "hola",
+            "detectedSource": "en"
+          }
+        }
+      },
+      "extensions": {
+        "bazaar": {}
+      },
+      "payTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "network": "stellar:testnet",
+      "scheme": "exact",
+      "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "amount": "10000",
+      "x402Version": 2,
+      "ownerPayTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "ownershipBinding": "tofu",
+      "firstSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSettlementTx": "aad676cd8cf932cc0844431aad1806569f8f82953ecee1d4cc9bb99361c96027",
+      "metadataVersion": 1
+    },
+    {
+      "canonicalKey": "http://127.0.0.1:4413/translate/document",
+      "type": "http",
+      "resource": "http://127.0.0.1:4413/translate/document",
+      "method": "GET",
+      "serviceName": "Document Translation",
+      "description": "Translate a whole PDF, DOCX or HTML document while preserving layout, tables and inline formatting. Returns a download URL for the translated file.",
+      "tags": [
+        "translation",
+        "document",
+        "pdf",
+        "layout"
+      ],
+      "mimeType": "application/json",
+      "discoveryInfo": {
+        "input": {
+          "type": "http",
+          "method": "GET",
+          "queryParams": {
+            "documentUrl": "https://example.com/a.pdf",
+            "target": "es"
+          }
+        },
+        "output": {
+          "type": "json",
+          "example": {
+            "downloadUrl": "https://example.com/a.es.pdf",
+            "pages": 12
+          }
+        }
+      },
+      "extensions": {
+        "bazaar": {}
+      },
+      "payTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "network": "stellar:testnet",
+      "scheme": "exact",
+      "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "amount": "10000",
+      "x402Version": 2,
+      "ownerPayTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "ownershipBinding": "tofu",
+      "firstSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSettlementTx": "a60acdb9d0c4409d50680b22359bf25fe4f9e9e04257f0f3352f3a90d9103741",
+      "metadataVersion": 1
+    },
+    {
+      "canonicalKey": "http://127.0.0.1:4413/tokens/translation-table",
+      "type": "http",
+      "resource": "http://127.0.0.1:4413/tokens/translation-table",
+      "method": "GET",
+      "serviceName": "Token Translation Table",
+      "description": "Map a token symbol or contract address to its canonical identifiers across chains. Despite the name this performs no language translation; it resolves asset identifiers.",
+      "tags": [
+        "tokens",
+        "identifiers",
+        "mapping",
+        "cross-chain"
+      ],
+      "mimeType": "application/json",
+      "discoveryInfo": {
+        "input": {
+          "type": "http",
+          "method": "GET",
+          "queryParams": {
+            "symbol": "USDC"
+          }
+        },
+        "output": {
+          "type": "json",
+          "example": {
+            "symbol": "USDC",
+            "identifiers": {
+              "stellar": "C…",
+              "base": "0x…"
+            }
+          }
+        }
+      },
+      "extensions": {
+        "bazaar": {}
+      },
+      "payTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "network": "stellar:testnet",
+      "scheme": "exact",
+      "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "amount": "10000",
+      "x402Version": 2,
+      "ownerPayTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "ownershipBinding": "tofu",
+      "firstSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSeenAt": "2026-08-12T05:34:24.732Z",
+      "lastSettlementTx": "325a347a047f39cd934ea3bc668603d45ffab24468ce82074402a1f11d0ff3de",
+      "metadataVersion": 1
+    },
+    {
+      "canonicalKey": "mcp://127.0.0.1:4531/tool/summarize_text#tool=summarize_text",
+      "type": "mcp",
+      "resource": "mcp://127.0.0.1:4531/tool/summarize_text",
+      "toolName": "summarize_text",
+      "serviceName": "Text Summarizer",
+      "description": "Summarize a block of text into a single short line.",
+      "tags": [
+        "summarization",
+        "text",
+        "nlp"
+      ],
+      "discoveryInfo": {
+        "input": {
+          "type": "mcp",
+          "toolName": "summarize_text",
+          "description": "Condense a passage of text into one short summary line. Accepts plain text and returns a single sentence with a word count.",
+          "transport": "sse",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "description": "The text to summarize, as plain UTF-8"
+              }
+            },
+            "required": [
+              "text"
+            ]
+          }
+        },
+        "output": {
+          "type": "json",
+          "example": {
+            "summary": "the quick brown fox jumped over… (12 words)"
+          }
+        }
+      },
+      "extensions": {
+        "bazaar": {}
+      },
+      "payTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "network": "stellar:testnet",
+      "scheme": "exact",
+      "asset": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+      "amount": "10000",
+      "x402Version": 2,
+      "ownerPayTo": "GDOEUTRI3CA534VATJBFTEFDOOAQR47UQBBLNRQ2IWAPLHV2OF433ULR",
+      "ownershipBinding": "tofu",
+      "firstSeenAt": "2026-08-13T17:13:39.920Z",
+      "lastSeenAt": "2026-08-13T17:13:39.920Z",
+      "lastSettlementTx": "f92a6aeca76861010f90f7e36d11837e6a9463df40b4a0b9024b6a2c6c16ed4b",
+      "seedSettlementTx": "530f07513fdebfdc05db9ced910157d0b5cdd48758ff9dacd7dc00127e675b8d",
+      "metadataVersion": 1
+    }
+  ]
+}

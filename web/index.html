@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wayfinder — decision-grade discovery for x402 on Stellar</title>
+<meta name="description" content="Reviewer preview: natural-language discovery, measured ranking and abstention for autonomous x402 payments on Stellar. Discovery only; not a hosted facilitator.">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge" title="Recorded Stellar testnet runs, reproducible from the repository">TESTNET-PROVEN</span>
+    <h1>Wayfinder</h1>
+    <p class="tagline">Decision-grade discovery for autonomous x402 payments on Stellar.</p>
+    <p class="sub">
+      Payments on Stellar are already machine-readable. What an agent still cannot do is
+      reliably <em>find</em> what to pay for — and when the buyer is software with a wallet,
+      a bad result is not a wasted click, it is a wasted payment.
+    </p>
+    <a class="cta" href="#try">Try Discovery</a>
+    <p class="disclosure" id="disclosure"></p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section id="try">
+    <h2>Try discovery</h2>
+    <p class="lede">
+      Type what an agent needs, in plain language. Ranking is dense retrieval over the
+      same index the benchmark measures — not substring matching.
+    </p>
+
+    <form id="search-form" autocomplete="off">
+      <label class="sr-only" for="q">What does your agent need?</label>
+      <input id="q" name="q" type="text" placeholder="What does your agent need?"
+             value="I need something that can condense a long passage of text" maxlength="512">
+      <button type="submit" id="go">Search</button>
+    </form>
+
+    <div class="examples">
+      <span>Try:</span>
+      <button class="chip" data-q="I need something that can condense a long passage of text">condense a long passage</button>
+      <button class="chip" data-q="will it rain tomorrow?">will it rain tomorrow?</button>
+      <button class="chip" data-q="what is the current token translation?">token translation</button>
+      <button class="chip chip-abstain" data-q="book me a dentist appointment">book me a dentist appointment</button>
+    </div>
+
+    <div class="filters">
+      <label>Type
+        <select id="f-type">
+          <option value="">any</option>
+          <option value="http">HTTP</option>
+          <option value="mcp">MCP</option>
+        </select>
+      </label>
+      <label>Network
+        <select id="f-network">
+          <option value="">any</option>
+          <option value="stellar:testnet">stellar:testnet</option>
+          <option value="stellar:pubnet">stellar:pubnet</option>
+        </select>
+      </label>
+      <label>Scheme
+        <select id="f-scheme">
+          <option value="">any</option>
+          <option value="exact">exact</option>
+        </select>
+      </label>
+      <p class="filter-note">
+        Filters are applied in the store <strong>before</strong> anything is scored. A perfect
+        semantic match on the wrong network is not a lower-ranked result — it is not a result.
+        Asset is shown but not filterable: the Bazaar query type has no asset field, and adding a
+        post-filter would break that ordering guarantee.
+      </p>
+    </div>
+
+    <div id="results" aria-live="polite"></div>
+  </section>
+
+  <section id="evidence">
+    <h2>Recorded Stellar testnet evidence</h2>
+    <p class="lede">
+      Historical, reproducible runs from the frozen implementation. This preview observes no
+      traffic of its own and reports none.
+    </p>
+    <div class="grid" id="evidence-grid"></div>
+    <div id="tx-links" class="tx-links"></div>
+  </section>
+
+  <section id="benchmark">
+    <h2>Retrieval evaluation</h2>
+    <div id="benchmark-body"></div>
+  </section>
+
+  <section id="status">
+    <h2>Current status</h2>
+    <div class="grid two" id="status-grid"></div>
+    <p class="disclosure strong" id="status-disclosure"></p>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <p>
+    Wayfinder is the product. <strong>Bazaar</strong>, <strong>x402</strong>,
+    <strong>Stellar</strong> and <strong>MCP</strong> are the protocol concepts it builds on and
+    keeps their names.
+  </p>
+  <p id="provenance" class="mono"></p>
+  <p>Apache-2.0. Discovery preview only — no settlement service is operated here.</p>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

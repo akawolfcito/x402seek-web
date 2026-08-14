@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+
+# Embedding model artifacts: 86 MB, fetched once from the Hugging Face CDN.
+.models-cache/
+
+# This service has no secrets. The rule exists so one can never arrive by accident.
+.env
+.env.*

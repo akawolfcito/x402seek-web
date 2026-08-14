@@ -1,0 +1,49 @@
+# CI for the preview.
+#
+# The licence gate runs on every push because this service is deployed
+# publicly: a copyleft dependency arriving transitively should break the build,
+# not be discovered by a reviewer.
+#
+# `verify:vendor` is intentionally absent — it needs the core repository, which
+# has no remote to clone. It is a local pre-deploy check, documented in the
+# README, not a CI step that would fail for the wrong reason.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Licence gate
+        run: pnpm audit:licenses
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # Caches the 86 MB model between runs so the suite is not re-downloading it.
+      - name: Cache embedding model
+        uses: actions/cache@v4
+        with:
+          path: .models-cache
+          key: minilm-l6-v2-onnx-v1
+
+      - name: Tests
+        run: pnpm test

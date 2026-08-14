@@ -1,0 +1,543 @@
+{
+  "generatedAt": "2026-08-14T10:24:16.566Z",
+  "scope": "resolved production dependency graph of wayfinder-web",
+  "independentOf": "The SCF core's audit covers a different graph. This report does not extend or restate its numbers.",
+  "totals": {
+    "resolvedPackages": 73,
+    "forbidden": 0,
+    "unknownOrUnclassified": 0,
+    "nativeBinaries": 1
+  },
+  "byLicense": {
+    "MIT": 60,
+    "BSD-3-Clause": 7,
+    "ISC": 4,
+    "Apache-2.0": 1,
+    "(MIT OR CC0-1.0)": 1
+  },
+  "model": {
+    "id": "Xenova/all-MiniLM-L6-v2",
+    "license": "Apache-2.0",
+    "note": "ONNX export of sentence-transformers/all-MiniLM-L6-v2; fetched from the Hugging Face CDN at runtime and cached on disk."
+  },
+  "native": [
+    {
+      "name": "onnxruntime-node",
+      "version": "1.24.3",
+      "license": "MIT"
+    }
+  ],
+  "packages": [
+    {
+      "name": "@fastify/ajv-compiler",
+      "version": "4.0.6",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "@fastify/error",
+      "version": "4.2.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "@fastify/fast-json-stringify-compiler",
+      "version": "5.1.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "@fastify/forwarded",
+      "version": "3.0.2",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "@fastify/merge-json-schemas",
+      "version": "0.2.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "@fastify/proxy-addr",
+      "version": "5.1.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "@huggingface/tokenizers",
+      "version": "0.1.3",
+      "license": "Apache-2.0",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "@pinojs/redact",
+      "version": "0.4.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "abstract-logging",
+      "version": "2.0.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "adm-zip",
+      "version": "0.5.18",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "ajv",
+      "version": "8.20.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "ajv-formats",
+      "version": "3.0.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "atomic-sleep",
+      "version": "1.0.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "avvio",
+      "version": "9.3.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "boolean",
+      "version": "3.2.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "cookie",
+      "version": "1.1.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "define-data-property",
+      "version": "1.1.4",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "define-properties",
+      "version": "1.2.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "dequal",
+      "version": "2.0.3",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "detect-node",
+      "version": "2.1.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "es-define-property",
+      "version": "1.0.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "es-errors",
+      "version": "1.3.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "es6-error",
+      "version": "4.1.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "escape-string-regexp",
+      "version": "4.0.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "fast-decode-uri-component",
+      "version": "1.0.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "fast-deep-equal",
+      "version": "3.1.3",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "fast-json-stringify",
+      "version": "7.0.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "fast-querystring",
+      "version": "1.1.2",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "fast-uri",
+      "version": "4.1.2",
+      "license": "BSD-3-Clause",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "fast-uri",
+      "version": "3.1.5",
+      "license": "BSD-3-Clause",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "fastify",
+      "version": "5.11.3",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "fastq",
+      "version": "1.20.1",
+      "license": "ISC",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "find-my-way",
+      "version": "9.7.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "global-agent",
+      "version": "3.0.0",
+      "license": "BSD-3-Clause",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "globalthis",
+      "version": "1.0.4",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "gopd",
+      "version": "1.2.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "has-property-descriptors",
+      "version": "1.0.2",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "ipaddr.js",
+      "version": "2.5.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "json-schema-ref-resolver",
+      "version": "3.0.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "json-schema-traverse",
+      "version": "1.0.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "json-stringify-safe",
+      "version": "5.0.1",
+      "license": "ISC",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "light-my-request",
+      "version": "6.6.0",
+      "license": "BSD-3-Clause",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "matcher",
+      "version": "3.0.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "object-keys",
+      "version": "1.1.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "on-exit-leak-free",
+      "version": "2.1.2",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "onnxruntime-common",
+      "version": "1.24.3",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "onnxruntime-node",
+      "version": "1.24.3",
+      "license": "MIT",
+      "source": "package.json",
+      "native": true
+    },
+    {
+      "name": "pino",
+      "version": "10.3.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "pino-abstract-transport",
+      "version": "3.0.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "pino-std-serializers",
+      "version": "7.1.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "process-warning",
+      "version": "5.1.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "process-warning",
+      "version": "4.0.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "quick-format-unescaped",
+      "version": "4.0.4",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "real-require",
+      "version": "0.2.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "real-require",
+      "version": "1.0.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "require-from-string",
+      "version": "2.0.2",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "ret",
+      "version": "0.5.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "reusify",
+      "version": "1.1.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "rfdc",
+      "version": "1.4.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "roarr",
+      "version": "2.15.4",
+      "license": "BSD-3-Clause",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "safe-regex2",
+      "version": "5.1.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "safe-stable-stringify",
+      "version": "2.5.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "secure-json-parse",
+      "version": "4.1.0",
+      "license": "BSD-3-Clause",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "semver",
+      "version": "7.8.5",
+      "license": "ISC",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "semver-compare",
+      "version": "1.0.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "serialize-error",
+      "version": "7.0.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "set-cookie-parser",
+      "version": "2.7.2",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "sonic-boom",
+      "version": "4.2.1",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "split2",
+      "version": "4.2.0",
+      "license": "ISC",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "sprintf-js",
+      "version": "1.1.3",
+      "license": "BSD-3-Clause",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "thread-stream",
+      "version": "4.2.0",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "toad-cache",
+      "version": "3.7.4",
+      "license": "MIT",
+      "source": "package.json",
+      "native": false
+    },
+    {
+      "name": "type-fest",
+      "version": "0.13.1",
+      "license": "(MIT OR CC0-1.0)",
+      "source": "package.json",
+      "native": false
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+# Railway config-as-code.
+# Schema: https://railway.com/railway.schema.json  (draft-07)
+#
+# TOML rather than railway.json purely so this file can explain itself; Railway
+# reads either.
+#
+# Chosen over Railpack: the build has a step Railpack cannot infer — the 86 MB
+# embedding model is baked into the image so a container start never depends on
+# the Hugging Face CDN. That lives in the Dockerfile, so the Dockerfile is the
+# builder.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+# Rebuild only on things that change the served artifact. Docs and the licence
+# artifact do not.
+watchPatterns = ["src/**", "vendor/**", "web/**", "data/**", "package.json", "pnpm-lock.yaml", "Dockerfile"]
+
+[deploy]
+# `pnpm start` comes from the image CMD; no startCommand override needed.
+healthcheckPath = "/health"
+# Measured: container reaches a 200 on /health in 4–5 s, of which ~1.2 s is the
+# ONNX session and index build. 120 s is slack for a cold image pull, not a
+# guess at how long the app takes.
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+# A frozen read-only catalog has nothing to coordinate between instances, but
+# one instance is also all the preview needs.
+numReplicas = 1
+
+# Sized from the runtime footprint measurement, not from a default.
+#
+#   peak RSS        ~318 MB, and the peak is the model load, not traffic
+#   after 30 searches ~296 MB, no growth
+#   1 vCPU vs 2 vCPU  p50 28.1 ms vs 28.7 ms — indistinguishable, because
+#                     inference on one short sequence does not parallelise
+#
+# So: 1 GB leaves ~3x headroom over steady state and covers the load spike,
+# and the second core would buy concurrency this preview does not need.
+[deploy.limitOverride.containers]
+cpu = 1
+memoryBytes = 1073741824

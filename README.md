@@ -109,10 +109,23 @@ audit that passes because it could not read a manifest has told you nothing.
 
 ## Deployment
 
-One persistent container. `render.yaml` is committed; Railway and Fly.io work
-from the same `Dockerfile`. Serverless is the wrong shape here: `onnxruntime-node`
-is a native binding and the model is 86 MB, so cold starts would defeat the
-purpose of the page. The model is baked into the image at build time.
+One persistent container on **Railway**; `railway.toml` is committed. Any other
+container host works from the same `Dockerfile`, which is host-agnostic.
+
+Serverless is the wrong shape here: `onnxruntime-node` is a native binding and
+the model is 86 MB, so cold starts would defeat the purpose of the page. The
+model is baked into the image at build time.
+
+Sized from measurement rather than a default — **1 GB / 1 vCPU**:
+
+| | |
+|---|---|
+| Peak RSS | ~318 MB, and the peak is the model load, not traffic |
+| After 30 sequential searches | ~296 MB, no growth |
+| Ready on `/health` | 4–5 s cold, of which ~1.2 s is the ONNX session and index |
+| Warm search p50 / p95 | 28 ms / 47 ms wall (13 ms / 22 ms in the engine) |
+| 1 vCPU vs 2 vCPU | p50 28.1 ms vs 28.7 ms — inference on one short sequence does not parallelise |
+| Image | 628 MB, of which 91 MB is the model |
 
 ## Licence
 

@@ -65,7 +65,7 @@ export const BENCHMARK = {
   retrievers: [
     { name: "Reference substring search", ndcgAt10: 22.6, reference: true },
     { name: "BM25", ndcgAt10: 83.0, reference: false },
-    { name: "Wayfinder dense retrieval", ndcgAt10: 95.3, reference: false, shipped: true },
+    { name: "x402Seek dense retrieval", ndcgAt10: 95.3, reference: false, shipped: true },
     { name: "Hybrid RRF", ndcgAt10: 93.5, reference: false },
   ],
   caveat: "Held-out synthetic benchmark — not production accuracy.",
@@ -107,7 +107,7 @@ export const STATUS = {
     ".well-known/x402 domain binding",
   ],
   disclosure:
-    "The public Wayfinder preview exposes discovery only. The facilitator is not " +
+    "The public x402Seek preview exposes discovery only. The facilitator is not " +
     "currently operated as a public settlement service.",
 } as const;
 

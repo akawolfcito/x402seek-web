@@ -1,4 +1,4 @@
-/* Wayfinder preview UI. No framework: one search box, a card list and four
+/* x402Seek preview UI. No framework: one search box, a card list and four
    static sections do not justify one, and a smaller dependency graph is easier
    to audit for a service that exists to be audited. */
 
@@ -130,7 +130,7 @@ function renderAbstention(abstained) {
   box.append(el("h3", null, "NO RECOMMENDATION"));
   const code = el("code", null, abstained.reason);
   box.append(code);
-  box.append(el("p", null, "Wayfinder did not find a service relevant enough to recommend spending on."));
+  box.append(el("p", null, "x402Seek did not find a service relevant enough to recommend spending on."));
   const nums = el("p", "nums");
   nums.textContent = `top score ${abstained.topScore.toFixed(4)} · threshold ${abstained.threshold}`;
   box.append(nums);

@@ -167,14 +167,14 @@ listings.push({
 process.stdout.write(JSON.stringify(listings));
 `;
 
-const shimPath = join(CORE, "apps", "e2e-stellar", ".wayfinder-snapshot.mts");
+const shimPath = join(CORE, "apps", "e2e-stellar", ".x402seek-snapshot.mts");
 
 let raw: string;
 try {
   writeFileSync(shimPath, SHIM, "utf8");
   raw = execFileSync(
     "pnpm",
-    ["--filter", "@stellar-bazaar/e2e-stellar", "exec", "tsx", ".wayfinder-snapshot.mts"],
+    ["--filter", "@stellar-bazaar/e2e-stellar", "exec", "tsx", ".x402seek-snapshot.mts"],
     { cwd: CORE, encoding: "utf8", maxBuffer: 32 * 1024 * 1024 },
   );
 } finally {

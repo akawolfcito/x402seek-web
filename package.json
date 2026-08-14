@@ -1,9 +1,9 @@
 {
-  "name": "wayfinder-web",
+  "name": "x402seek-web",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
-  "description": "Reviewer preview for Wayfinder — decision-grade discovery for autonomous x402 payments on Stellar. Discovery only; not a facilitator.",
+  "description": "Reviewer preview for x402Seek — decision-grade discovery for autonomous x402 payments on Stellar. Discovery only; not a facilitator.",
   "type": "module",
   "engines": {
     "node": ">=22.0.0"

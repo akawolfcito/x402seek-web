@@ -1,5 +1,5 @@
 /**
- * Licence audit for the Wayfinder preview.
+ * Licence audit for the x402Seek preview.
  *
  * This service is deployed publicly and separately from the SCF core, so it
  * carries its own audit and reports its own numbers. It deliberately does not
@@ -189,7 +189,7 @@ const MODEL = {
 
 const artifact = {
   generatedAt: new Date().toISOString(),
-  scope: "resolved production dependency graph of wayfinder-web",
+  scope: "resolved production dependency graph of x402seek-web",
   independentOf:
     "The SCF core's audit covers a different graph. This report does not extend or restate its numbers.",
   totals: {
@@ -207,7 +207,7 @@ const artifact = {
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(join(OUT_DIR, "licenses.json"), `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
 
-console.log("wayfinder-web licence audit");
+console.log("x402seek-web licence audit");
 console.log(`  resolved packages : ${records.length}`);
 for (const [license, count] of [...byLicense].sort((a, b) => b[1] - a[1])) {
   console.log(`    ${license.padEnd(28)} ${count}`);

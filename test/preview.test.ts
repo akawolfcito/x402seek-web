@@ -183,7 +183,7 @@ describe("the public surface", () => {
     const html = (await app.inject({ method: "GET", url: "/" })).body;
     expect(html).toContain("TESTNET-PROVEN");
     const sentence =
-      "The public Wayfinder preview exposes discovery only. The facilitator is not " +
+      "The public x402Seek preview exposes discovery only. The facilitator is not " +
       "currently operated as a public settlement service.";
     // Once in the hero, once in the status section.
     expect(html.split(sentence).length - 1).toBe(2);

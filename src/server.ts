@@ -1,5 +1,5 @@
 /**
- * The Wayfinder reviewer preview.
+ * The x402Seek reviewer preview.
  *
  * Two read-only discovery routes over a frozen catalog, plus static files.
  * There is no POST route, no registration route, no `/verify`, no `/settle`,
@@ -129,7 +129,7 @@ export function buildServer() {
 
   app.get("/health", async () => ({
     status: "ok",
-    service: "wayfinder-preview",
+    service: "x402seek-preview",
     mode: "discovery-only",
     listings: store.all().length,
     coreCommit: snapshot.coreCommit,
@@ -246,7 +246,7 @@ export function buildServer() {
 export async function start() {
   const app = buildServer();
 
-  console.log("wayfinder preview — discovery only, no settlement");
+  console.log("x402seek preview — discovery only, no settlement");
   console.log(`  core commit : ${snapshot.coreCommit}`);
   console.log(`  snapshot    : ${store.all().length} listings, built ${snapshot.builtAt}`);
   console.log(`  threshold   : ${DEFAULT_ABSTENTION_THRESHOLD} cosine`);

@@ -1,4 +1,4 @@
-# Wayfinder preview — one persistent Node container.
+# x402Seek preview — one persistent Node container.
 #
 # Not serverless, and not by preference: `onnxruntime-node` is a native binding
 # and the embedding model is 86 MB. Under a function runtime that combination

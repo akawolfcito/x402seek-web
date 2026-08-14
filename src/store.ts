@@ -39,7 +39,7 @@ const MAX_LIMIT = 100;
 
 export class ReadOnlyCatalogError extends Error {
   constructor() {
-    super("the Wayfinder preview catalog is frozen and cannot be written to");
+    super("the x402Seek preview catalog is frozen and cannot be written to");
     this.name = "ReadOnlyCatalogError";
   }
 }

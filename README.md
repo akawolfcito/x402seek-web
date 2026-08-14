@@ -1,4 +1,4 @@
-# Wayfinder — reviewer preview
+# x402Seek — reviewer preview
 
 **Decision-grade discovery for autonomous x402 payments on Stellar.**
 
@@ -72,7 +72,7 @@ contains no `@x402/*` package and no database driver.
 ```bash
 nvm use                 # 22
 pnpm install
-pnpm test               # 19 tests
+pnpm test               # 20 tests
 pnpm typecheck
 pnpm audit:licenses     # exits non-zero on copyleft or unclassified
 pnpm verify:vendor      # vendored source == frozen core at the pinned commit

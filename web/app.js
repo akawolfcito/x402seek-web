@@ -283,7 +283,12 @@ for (const id of ["#f-type", "#f-network", "#f-scheme"]) {
     EVIDENCE = await (await fetch("/api/evidence")).json();
     renderEvidence(EVIDENCE);
   } catch {
-    $("#disclosure").textContent = "Evidence could not be loaded.";
+    // Never overwrite the disclaimer with an error: the statement that this is
+    // discovery only has to survive a failed fetch. Report the failure where
+    // the evidence would have gone instead.
+    $("#evidence-grid").replaceChildren(
+      el("p", "error", "Recorded evidence could not be loaded. Reload, or read it in the repository."),
+    );
   }
   search($("#q").value);
 })();

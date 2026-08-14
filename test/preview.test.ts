@@ -171,6 +171,25 @@ describe("the public surface", () => {
     expect(body.items[0]).toHaveProperty("ownershipBinding", "tofu");
   });
 
+  /**
+   * The disclaimer must not be script-dependent.
+   *
+   * It was: both elements shipped empty and were filled from /api/evidence, so
+   * a blocked script or a failed fetch produced a page headed "TESTNET-PROVEN"
+   * with nothing saying the facilitator is not operated. Caught by the local
+   * reviewer smoke.
+   */
+  it("states discovery-only in the served HTML, without running any script", async () => {
+    const html = (await app.inject({ method: "GET", url: "/" })).body;
+    expect(html).toContain("TESTNET-PROVEN");
+    const sentence =
+      "The public Wayfinder preview exposes discovery only. The facilitator is not " +
+      "currently operated as a public settlement service.";
+    // Once in the hero, once in the status section.
+    expect(html.split(sentence).length - 1).toBe(2);
+    expect(html).toContain("no settlement service is operated here");
+  });
+
   it("never reports live traffic in its evidence", async () => {
     const body = (await app.inject({ method: "GET", url: "/api/evidence" })).json();
     const text = JSON.stringify(body).toLowerCase();

@@ -8,6 +8,10 @@
   "engines": {
     "node": ">=22.0.0"
   },
+  "packageManager": "pnpm@10.5.2",
+  "pnpm": {
+    "onlyBuiltDependencies": ["onnxruntime-node", "esbuild"]
+  },
   "scripts": {
     "start": "tsx src/server.ts",
     "dev": "tsx watch src/server.ts",

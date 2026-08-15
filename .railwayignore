@@ -1,0 +1,20 @@
+# What `railway up` must not upload.
+#
+# The tracked tree is ~300 KB. Without this, an upload would also carry
+# node_modules (285 MB) and the embedding model cache (87 MB) — both of which
+# the image rebuilds or bakes in anyway, so sending them is pure waste.
+#
+# .gitignore already covers these, but `railway up` deploys a directory rather
+# than a commit, so this states it rather than relying on that.
+
+node_modules/
+.models-cache/
+.git/
+dist/
+*.log
+.DS_Store
+.env
+.env.*
+
+# Test-only; never part of the served artifact.
+test/

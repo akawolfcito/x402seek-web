@@ -25,11 +25,14 @@ let EVIDENCE = null;
  * Which data source the page is showing: "evidence" or "live".
  *
  * The two are never blended. Every section that changes with it says which one
- * it is showing, and a live failure reports itself as a live failure — falling
+ * it is showing, and a live failure reports itself as a live failure. Falling
  * back to recorded data under a live badge would be the worst thing this page
  * could do.
+ *
+ * Live is the default now that the facilitator, the seller and the catalog are
+ * all really running. Evidence stayed exactly where it was, one tab away.
  */
-let MODE = "evidence";
+let MODE = "live";
 const isLive = () => MODE === "live";
 
 /** 7-decimal SEP-41 base units → a human figure. Never rounded away to zero. */
@@ -129,8 +132,9 @@ function card(listing, relevance, rank) {
   if (relevance !== undefined) head.append(relevanceRing(relevance));
   root.append(head);
 
-  root.append(verdictPills(accepts, listing, relevance));
-  root.append(primaryTerms(accepts, listing));
+  const facts = el("div", "card-facts");
+  facts.append(verdictPills(accepts, listing, relevance), primaryTerms(accepts, listing));
+  root.append(facts);
   root.append(
     el("p", "origin-note", "Testnet evidence resource. Local origin used in the recorded run."),
   );
@@ -530,8 +534,9 @@ function liveCard(item, relevance, rank) {
   if (relevance !== undefined) head.append(relevanceRing(relevance));
   card.append(head);
 
-  card.append(verdictPills(accepts, item, relevance));
-  card.append(primaryTerms(accepts, item));
+  const facts = el("div", "card-facts");
+  facts.append(verdictPills(accepts, item, relevance), primaryTerms(accepts, item));
+  card.append(facts);
 
   // Protocol detail belongs behind a disclosure, not in the first scan.
   const details = el("div");
@@ -659,6 +664,24 @@ async function renderHostedSettlement() {
     lead.append(el("span", "n", `${trimZeros(s.amount)} USDC`), el("span", "k", "paid"));
     box.append(lead);
 
+    // Two movements, drawn rather than tabulated: the payment, and the fee that
+    // the buyer did not have to hold XLM to cover.
+    const wire = (from, label, to, tone) => {
+      const row = el("div", `wire${tone ? ` ${tone}` : ""}`);
+      row.append(
+        el("span", "wnode", from),
+        el("span", "warrow", label),
+        el("span", "wnode", to),
+      );
+      return row;
+    };
+    const flow = el("div", "wires");
+    flow.append(
+      wire("Buyer", `${trimZeros(s.amount)} USDC`, "Seller", "pay"),
+      wire("x402Seek facilitator", `sponsors ${s.facilitatorFeeXlm} XLM`, "Stellar", "fee"),
+    );
+    box.append(flow);
+
     const dl = el("dl", "terms primary");
     const add = (k, v, title) => {
       const w = el("div", "term");
@@ -723,15 +746,16 @@ async function setMode(mode) {
   $("#mode-live").setAttribute("aria-selected", String(mode === "live"));
   document.body.classList.toggle("live-mode", mode === "live");
 
-  $("#discovery-source").textContent = isLive()
-    ? "Live testnet"
-    : "Recorded evidence";
+  $("#discovery-source").textContent = isLive() ? "Live testnet" : "Recorded evidence";
+
+  // The strongest state on the page is whichever one is answering.
+  $("#top-state").textContent = isLive() ? "● LIVE TESTNET" : "TESTNET-PROVEN";
 
   // Said once, in a band the reader cannot scroll past, so no section below it
   // can be mistaken for the other source.
   $("#mode-badge").textContent = isLive() ? "● LIVE TESTNET" : "RECORDED EVIDENCE";
   $("#mode-note").textContent = isLive()
-    ? "Connected to the hosted x402Seek facilitator on Stellar testnet."
+    ? "Connecting to the hosted x402Seek facilitator on Stellar testnet."
     : "Reproducible results from the frozen testnet implementation.";
   $("#cta-primary").textContent = isLive() ? "Try live discovery" : "Try discovery";
 
@@ -740,8 +764,16 @@ async function setMode(mode) {
   $("#hero-live").hidden = !isLive();
 
   if (isLive()) {
-    await renderLiveStatus();
+    // "Connected" is only true once something answered. Until then the band
+    // says it is still trying, and if nothing answers it says so.
+    const up = await renderLiveStatus();
+    $("#mode-note").textContent = up
+      ? "Connected to the hosted x402Seek facilitator on Stellar testnet."
+      : "The hosted facilitator did not answer. Recorded evidence is under the Evidence tab.";
+    $("#mode-band").classList.toggle("is-down", !up);
     await renderHostedSettlement();
+  } else {
+    $("#mode-band").classList.remove("is-down");
   }
   await search($("#q").value);
 }
@@ -783,5 +815,5 @@ for (const id of ["#f-type", "#f-network", "#f-scheme"]) {
       el("p", "error", "Recorded evidence could not be loaded. Reload, or read it in the repository."),
     );
   }
-  search($("#q").value);
+  await setMode("live");
 })();

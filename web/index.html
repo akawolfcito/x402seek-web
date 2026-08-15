@@ -15,12 +15,12 @@
       <span class="mark" aria-hidden="true"></span>
       <span class="wordmark">x402Seek</span>
     </a>
-    <span class="badge">TESTNET-PROVEN</span>
+    <span class="badge" id="top-state">● LIVE TESTNET</span>
     <!-- Two data sources, never blended. The active one is stated on every
          section that changes with it. -->
     <div class="modes" role="tablist" aria-label="Data source">
-      <button class="mode is-active" id="mode-evidence" role="tab" aria-selected="true">Evidence</button>
-      <button class="mode" id="mode-live" role="tab" aria-selected="false">Live testnet</button>
+      <button class="mode is-active" id="mode-live" role="tab" aria-selected="true">Live testnet</button>
+      <button class="mode" id="mode-evidence" role="tab" aria-selected="false">Evidence</button>
     </div>
     <nav class="nav">
       <a href="#discovery">Discovery</a>
@@ -44,9 +44,9 @@
         service, or recommends none.</p>
       <p class="sub">Decision-grade discovery for autonomous x402 payments.
         Payments settle through x402 on Stellar.</p>
-      <p class="sub live-only" id="hero-live" hidden>Hosted discovery and settlement on Stellar testnet.</p>
+      <p class="sub live-only" id="hero-live">Hosted discovery and settlement on Stellar testnet.</p>
       <div class="cta-row">
-        <a class="cta" href="#discovery" id="cta-primary">Try discovery</a>
+        <a class="cta" href="#discovery" id="cta-primary">Try live discovery</a>
         <a class="cta ghost" href="#evidence">View evidence</a>
       </div>
       <!-- In the markup, not injected. The script replaces it with the identical
@@ -57,36 +57,50 @@
 
     <!-- One worked example, told as a picture. Static on purpose: it explains the
          product, it does not run it. The real thing is one section below. -->
-    <figure class="eli5" aria-label="How one request becomes a recommendation">
+    <!-- One worked example, told as a picture. Static on purpose: it explains the
+         product, it does not run it. The real thing is one section below. -->
+    <figure class="eli5" aria-label="How one request becomes a settled payment">
       <figcaption>One request, end to end</figcaption>
 
-      <div class="eli5-node ask">
-        <span class="eli5-lbl">An agent asks</span>
-        <p class="eli5-say">“I need to summarize a document”</p>
+      <div class="fnode ask">
+        <span class="flbl">An agent asks</span>
+        <p class="fsay">“I need to summarize a document”</p>
       </div>
 
-      <div class="eli5-link" aria-hidden="true"><span>Search</span></div>
+      <div class="fjoin"><span>Search</span></div>
 
-      <div class="eli5-node engine">
-        <span class="eli5-lbl">x402Seek</span>
-        <p class="eli5-say">Reads the catalog, ranks by meaning, scores every candidate.</p>
+      <div class="fnode engine">
+        <span class="flbl">x402Seek</span>
+        <p class="fsay">Ranks the catalog by meaning. Scores every candidate.</p>
       </div>
 
-      <div class="eli5-link" aria-hidden="true"><span>Decide</span></div>
+      <div class="fjoin"><span>Decide</span></div>
 
-      <div class="eli5-fork">
-        <div class="eli5-node hit">
-          <span class="eli5-lbl ok">Good match</span>
-          <p class="eli5-name">Text Summarizer</p>
-          <p class="eli5-price">0.001 USDC</p>
-          <p class="eli5-pills"><span class="pill ok">Relevant</span><span class="pill ok">Payable</span></p>
+      <div class="fsplit">
+        <div class="fnode hit">
+          <span class="flbl ok">Relevant and payable</span>
+          <p class="fname">Text Summarizer</p>
+          <p class="fprice">0.001 USDC</p>
         </div>
-        <div class="eli5-node miss">
-          <span class="eli5-lbl bad">No good match</span>
-          <p class="eli5-name">Abstain</p>
-          <p class="eli5-price">0 USDC <span class="unit">recommended</span></p>
-          <p class="eli5-pills"><span class="pill bad">No recommendation</span></p>
-        </div>
+        <aside class="fnode miss">
+          <span class="flbl bad">No good match</span>
+          <p class="fname">Abstain</p>
+          <p class="fprice">0 USDC <span class="unit">recommended</span></p>
+        </aside>
+      </div>
+
+      <div class="fjoin"><span>Live 402</span></div>
+
+      <div class="fnode terms">
+        <span class="flbl">Terms re-checked</span>
+        <p class="fsay">The seller’s current 402 decides, not the catalog.</p>
+      </div>
+
+      <div class="fjoin"><span>Settle</span></div>
+
+      <div class="fnode settle">
+        <span class="flbl ok">Stellar settles</span>
+        <p class="fsay">Exact USDC on testnet. The buyer pays no network fee.</p>
       </div>
 
       <p class="eli5-foot">An illustration, not a live query.</p>
@@ -96,18 +110,20 @@
   <!-- Which of the two data sources is answering. Stated once, loudly, before
        anything below it can be misread as the other one. -->
   <div class="mode-band" id="mode-band">
-    <span class="mode-badge" id="mode-badge">RECORDED EVIDENCE</span>
-    <p class="mode-note" id="mode-note">Reproducible results from the frozen testnet implementation.</p>
+    <span class="mode-badge" id="mode-badge">● LIVE TESTNET</span>
+    <p class="mode-note" id="mode-note">Connecting to the hosted x402Seek facilitator on Stellar testnet.</p>
   </div>
 
   <section id="discovery">
     <div class="sec-head">
       <span class="num">01</span><h2>Discovery</h2>
-      <span class="source" id="discovery-source">Recorded evidence</span>
+      <span class="source" id="discovery-source">Live testnet</span>
     </div>
 
     <!-- Live-only: what the hosted deployment says about itself, right now. -->
     <div id="live-status" class="live-status" hidden></div>
+
+    <p class="flowstrip" aria-hidden="true"><span>Intent</span><span>x402Seek</span><span>Result</span><span>Inspect live 402</span></p>
 
     <h3 class="ask">What does your agent need?</h3>
     <form id="search-form" autocomplete="off">

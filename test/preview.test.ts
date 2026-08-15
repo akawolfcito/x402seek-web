@@ -181,7 +181,6 @@ describe("the public surface", () => {
    */
   it("states the read-only boundary in the served HTML, without running any script", async () => {
     const html = (await app.inject({ method: "GET", url: "/" })).body;
-    expect(html).toContain("TESTNET-PROVEN");
     const sentence =
       "The browser experience is read-only. The hosted facilitator operates on Stellar testnet.";
     // Once in the hero, once in the status section.
@@ -211,6 +210,44 @@ describe("the public surface", () => {
     expect(status.planned.join(" ")).toContain("upto");
   });
 
+  it("leads with the live state and keeps the proof state one tab away", async () => {
+    const html = (await app.inject({ method: "GET", url: "/" })).body;
+    const script = (await app.inject({ method: "GET", url: "/app.js" })).body;
+
+    // Live is the default now that the facilitator really runs.
+    expect(html).toContain('id="mode-live" role="tab" aria-selected="true"');
+    expect(html).toContain('id="mode-evidence" role="tab" aria-selected="false"');
+    // Live testnet is listed before Evidence.
+    expect(html.indexOf('id="mode-live"')).toBeLessThan(html.indexOf('id="mode-evidence"'));
+    expect(html).toContain("● LIVE TESTNET");
+    // TESTNET-PROVEN did not disappear, it moved to the mode it describes.
+    expect(html).not.toContain("TESTNET-PROVEN");
+    expect(script).toContain("TESTNET-PROVEN");
+    expect(script).toContain('await setMode("live")');
+  });
+
+  it("does not claim a connection it has not made yet", async () => {
+    // Before any request is answered the band says it is still trying. Saying
+    // "connected" in static markup would be a claim about a machine this file
+    // has never spoken to.
+    const html = (await app.inject({ method: "GET", url: "/" })).body;
+    const script = (await app.inject({ method: "GET", url: "/app.js" })).body;
+    expect(html).toContain("Connecting to the hosted x402Seek facilitator on Stellar testnet.");
+    expect(html).not.toContain("Connected to the hosted");
+    expect(script).toContain("Connected to the hosted x402Seek facilitator on Stellar testnet.");
+    expect(script).toContain("The hosted facilitator did not answer.");
+  });
+
+  it("draws the whole path, refusal branch included", async () => {
+    const html = (await app.inject({ method: "GET", url: "/" })).body;
+    // Search, decide, re-check, settle. The catalog never gets the last word.
+    for (const step of ["Search", "Decide", "Live 402", "Settle"]) {
+      expect(html).toContain(`<span>${step}</span>`);
+    }
+    expect(html).toContain("Stellar settles");
+    expect(html).toContain("The seller\u2019s current 402 decides, not the catalog.");
+  });
+
   it("explains the product in static markup, including the refusal branch", async () => {
     // The hero has to survive a blocked script. A visitor who never runs app.js
     // should still be able to read what x402Seek does and what it does instead
@@ -219,6 +256,7 @@ describe("the public surface", () => {
     expect(html).toContain("x402Seek recommends a payable\n        service, or recommends none");
     expect(html).toContain("Text Summarizer");
     expect(html).toContain("Abstain");
+    expect(html).toContain("Relevant and payable");
     // Read as a person reads it, since the figure and its unit are separate spans.
     const text = html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
     expect(text).toContain("0 USDC recommended");
@@ -232,10 +270,10 @@ describe("the public surface", () => {
     const script = (await app.inject({ method: "GET", url: "/app.js" })).body;
     // Static default is the recorded source; the live wording is script-side.
     expect(html).toContain('id="mode-band"');
-    expect(html).toContain("RECORDED EVIDENCE");
-    expect(html).toContain("Reproducible results from the frozen testnet implementation.");
-    expect(script).toContain("● LIVE TESTNET");
-    expect(script).toContain("Connected to the hosted x402Seek facilitator on Stellar testnet.");
+    // Static default is the live source; the recorded wording is script-side.
+    expect(html).toContain("● LIVE TESTNET");
+    expect(script).toContain("RECORDED EVIDENCE");
+    expect(script).toContain("Reproducible results from the frozen testnet implementation.");
   });
 
   it("asks the question in the user's words and labels the action Seek", async () => {

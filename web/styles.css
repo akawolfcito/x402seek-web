@@ -403,9 +403,12 @@ body.live-mode .source { color: var(--ok); }
 
 /* ---- the worked example ----
    The hero's job is to explain the product before any of its vocabulary is
-   introduced. A single request drawn top to bottom does that faster than three
-   abstract nouns, and the fork at the bottom is the whole differentiator: this
-   is the only discovery engine on the page that is allowed to say no. */
+   introduced. One request drawn top to bottom does that faster than three
+   abstract nouns, and the branch at the decision point is the differentiator:
+   this is the only discovery engine here that is allowed to say no.
+
+   The dot travelling each connector is the whole motion budget. It carries one
+   piece of information, direction, and it stops for anyone who asked it to. */
 
 .eli5 {
   margin: 0; padding: 18px;
@@ -416,37 +419,55 @@ body.live-mode .source { color: var(--ok); }
   font: 600 9.5px/1 var(--mono); letter-spacing: 0.11em; text-transform: uppercase;
   color: var(--ink-3); margin-bottom: 14px;
 }
-.eli5-node { border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; background: var(--paper); }
-.eli5-node.engine { background: var(--accent-soft); border-color: #dcdcfb; }
-.eli5-node.hit { background: #f2fbf7; border-color: #cfe8dc; }
-.eli5-node.miss { background: var(--rose-soft); border-color: #f3d3da; }
-.eli5-lbl {
-  display: block; font: 600 9px/1 var(--mono); letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--ink-3); margin-bottom: 7px;
-}
-.eli5-lbl.ok { color: var(--ok); }
-.eli5-lbl.bad { color: var(--rose); }
-.eli5-say { margin: 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
-.eli5-node.ask .eli5-say { color: var(--ink); font-size: 14.5px; }
-.eli5-name { margin: 0; font-weight: 650; font-size: 15px; letter-spacing: -0.012em; }
-.eli5-price { margin: 3px 0 0; font: 620 15px/1.2 var(--mono); letter-spacing: -0.02em; }
-.eli5-node.hit .eli5-price { color: var(--ok); }
-.eli5-node.miss .eli5-price { color: var(--rose); }
-.eli5-pills { margin: 9px 0 0; display: flex; flex-wrap: wrap; gap: 5px; }
 
-/* The connector carries the step name, so Search / Rank / Decide survive as
-   labels on the motion rather than as a separate list. */
-.eli5-link { display: flex; align-items: center; gap: 9px; padding: 7px 0 7px 14px; }
-.eli5-link::before {
-  content: ""; width: 1px; height: 20px; background: var(--rule);
+.fnode { border: 1px solid var(--rule); border-radius: 10px; padding: 11px 13px; background: var(--paper); }
+.fnode.engine { background: var(--accent-soft); border-color: #dcdcfb; }
+.fnode.hit, .fnode.settle { background: #f2fbf7; border-color: #cfe8dc; }
+.fnode.miss { background: var(--rose-soft); border-color: #f3d3da; }
+.flbl {
+  display: block; font: 600 9px/1 var(--mono); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px;
 }
-.eli5-link span {
+.flbl.ok { color: var(--ok); }
+.flbl.bad { color: var(--rose); }
+.fsay { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+.fnode.ask .fsay { color: var(--ink); font-size: 14.5px; }
+.fname { margin: 0; font-weight: 650; font-size: 14.5px; letter-spacing: -0.012em; }
+.fprice { margin: 3px 0 0; font: 620 14.5px/1.2 var(--mono); letter-spacing: -0.02em; }
+.fnode.hit .fprice { color: var(--ok); }
+.fnode.miss .fprice { color: var(--rose); }
+.fprice .unit { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink-2); }
+
+/* The connector names the step and shows the direction. */
+.fjoin { position: relative; display: flex; align-items: center; padding: 9px 0 9px 15px; }
+.fjoin span {
   font: 600 9px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);
 }
-.eli5-fork { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.fjoin::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 1px;
+  background: repeating-linear-gradient(to bottom, var(--rule) 0 3px, transparent 3px 7px);
+}
+.fjoin::after {
+  content: ""; position: absolute; left: -1.5px; width: 4px; height: 4px;
+  border-radius: 50%; background: var(--accent);
+  animation: flowdot 2.8s linear infinite;
+}
+@keyframes flowdot {
+  0% { top: 0; opacity: 0; }
+  18% { opacity: 1; }
+  82% { opacity: 1; }
+  100% { top: calc(100% - 4px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fjoin::after { animation: none; top: calc(50% - 2px); opacity: 0.55; }
+}
+body.live-mode .fjoin::after { background: var(--ok); }
+
+/* The refusal is not a footnote, so it sits level with the match it replaced. */
+.fsplit { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 9px; }
 .eli5-foot { margin: 14px 0 0; font-size: 11.5px; color: var(--ink-3); }
 
-@media (max-width: 420px) { .eli5-fork { grid-template-columns: 1fr; } }
+@media (max-width: 460px) { .fsplit { grid-template-columns: 1fr; } }
 
 /* ---- pills ---- */
 
@@ -546,5 +567,58 @@ body.live-mode #mode-live.is-active { color: var(--ok); }
 body.live-mode #q:focus { outline-color: var(--ok); }
 body.live-mode .chip:hover { border-color: var(--ok); color: var(--ok); }
 
-/* "0 USDC" is the figure. "recommended" is the unit it is measured in. */
-.eli5-price .unit { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink-2); }
+/* ---- discovery flow legend ----
+   The same four beats as the hero, in miniature, so the demo below is read as
+   the thing the hero just described rather than as a separate widget. */
+
+.flowstrip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 9px;
+  margin: 20px 0 0; font: 600 9px/1 var(--mono); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.flowstrip span + span::before { content: "→"; margin-right: 9px; color: var(--rule); }
+body.live-mode .flowstrip span:last-child { color: var(--ok); }
+
+/* ---- result card: one group, not five lines ---- */
+
+.card-facts { border-top: 1px solid var(--rule-soft); background: #fcfcfe; padding-top: 12px; }
+.card-facts .pills { padding: 0 18px 0; }
+.card-facts .terms { border-top: 0; padding: 10px 18px 14px; }
+.card.live .card-facts { background: #f8fdfb; }
+
+/* ---- hosted settlement as two movements ---- */
+
+.wires { display: grid; gap: 8px; margin-bottom: 16px; }
+.wire { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.wnode {
+  font-size: 12.5px; font-weight: 600; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--rule);
+  border-radius: 7px; padding: 6px 10px;
+}
+.warrow {
+  position: relative; flex: 1; min-width: 120px; text-align: center;
+  font: 600 10px/1 var(--mono); letter-spacing: 0.04em; color: var(--ok);
+  padding-bottom: 7px;
+}
+.warrow::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 2px; height: 1px;
+  background: repeating-linear-gradient(to right, #cfe8dc 0 4px, transparent 4px 8px);
+}
+.wire.fee .warrow { color: var(--ink-3); }
+.wire.fee .warrow::after { background: repeating-linear-gradient(to right, var(--rule) 0 4px, transparent 4px 8px); }
+
+/* ---- a live band that is not connected must not claim it is ---- */
+
+body.live-mode .mode-band.is-down {
+  border-color: #f3d3da; border-left-color: var(--rose); background: var(--rose-soft);
+}
+body.live-mode .mode-band.is-down .mode-badge { color: var(--rose); }
+
+/* ---- retrieval: one comparison, not a report ---- */
+
+.bars { gap: 8px; margin-bottom: 12px; }
+.bar-track { height: 6px; }
+.bar-name { font-size: 12.5px; }
+
+/* A comparison, not a chart. Full page width made two bars look like a report. */
+#evaluation .bars { max-width: 620px; }

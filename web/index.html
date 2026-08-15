@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>x402Seek · decision-grade discovery for x402 on Stellar</title>
-<meta name="description" content="Decision-grade discovery for autonomous x402 payments on Stellar. Natural-language search, measured ranking, and abstention when nothing is relevant enough. Live on Stellar testnet.">
+<meta name="description" content="Agents describe what they need. x402Seek recommends a payable service, or recommends none. Decision-grade discovery for autonomous x402 payments on Stellar.">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -24,6 +24,7 @@
     </div>
     <nav class="nav">
       <a href="#discovery">Discovery</a>
+      <a href="#why">Why</a>
       <a href="#evidence">Evidence</a>
       <a href="#evaluation">Evaluation</a>
       <a href="#status">Status</a>
@@ -37,12 +38,15 @@
   <section class="hero">
     <div class="hero-copy">
       <h1><em>Seek</em> what's worth paying for on Stellar.</h1>
-      <p class="tagline">Decision-grade discovery for autonomous x402 payments.</p>
-      <p class="sub">Agents can already pay. x402Seek helps them discover what is worth paying
-        for and abstain when nothing is relevant enough.</p>
+      <!-- Plain English first. The protocol vocabulary comes one line later, once
+           the reader already knows what the product does. -->
+      <p class="tagline">Agents describe what they need. x402Seek recommends a payable
+        service, or recommends none.</p>
+      <p class="sub">Decision-grade discovery for autonomous x402 payments.
+        Payments settle through x402 on Stellar.</p>
       <p class="sub live-only" id="hero-live" hidden>Hosted discovery and settlement on Stellar testnet.</p>
       <div class="cta-row">
-        <a class="cta" href="#discovery">Try discovery</a>
+        <a class="cta" href="#discovery" id="cta-primary">Try discovery</a>
         <a class="cta ghost" href="#evidence">View evidence</a>
       </div>
       <!-- In the markup, not injected. The script replaces it with the identical
@@ -51,24 +55,50 @@
       <p class="disclosure" id="disclosure">The browser experience is read-only. The hosted facilitator operates on Stellar testnet.</p>
     </div>
 
-    <ol class="pipeline" aria-label="How a query becomes a payable result">
-      <li>
-        <span class="step">1</span>
-        <h3>Search</h3>
-        <p>Describe what the agent needs.</p>
-      </li>
-      <li>
-        <span class="step">2</span>
-        <h3>Rank</h3>
-        <p>Filter, score, and compare.</p>
-      </li>
-      <li>
-        <span class="step">3</span>
-        <h3>Decide</h3>
-        <p>Recommend or abstain.</p>
-      </li>
-    </ol>
+    <!-- One worked example, told as a picture. Static on purpose: it explains the
+         product, it does not run it. The real thing is one section below. -->
+    <figure class="eli5" aria-label="How one request becomes a recommendation">
+      <figcaption>One request, end to end</figcaption>
+
+      <div class="eli5-node ask">
+        <span class="eli5-lbl">An agent asks</span>
+        <p class="eli5-say">“I need to summarize a document”</p>
+      </div>
+
+      <div class="eli5-link" aria-hidden="true"><span>Search</span></div>
+
+      <div class="eli5-node engine">
+        <span class="eli5-lbl">x402Seek</span>
+        <p class="eli5-say">Reads the catalog, ranks by meaning, scores every candidate.</p>
+      </div>
+
+      <div class="eli5-link" aria-hidden="true"><span>Decide</span></div>
+
+      <div class="eli5-fork">
+        <div class="eli5-node hit">
+          <span class="eli5-lbl ok">Good match</span>
+          <p class="eli5-name">Text Summarizer</p>
+          <p class="eli5-price">0.001 USDC</p>
+          <p class="eli5-pills"><span class="pill ok">Relevant</span><span class="pill ok">Payable</span></p>
+        </div>
+        <div class="eli5-node miss">
+          <span class="eli5-lbl bad">No good match</span>
+          <p class="eli5-name">Abstain</p>
+          <p class="eli5-price">0 USDC <span class="unit">recommended</span></p>
+          <p class="eli5-pills"><span class="pill bad">No recommendation</span></p>
+        </div>
+      </div>
+
+      <p class="eli5-foot">An illustration, not a live query.</p>
+    </figure>
   </section>
+
+  <!-- Which of the two data sources is answering. Stated once, loudly, before
+       anything below it can be misread as the other one. -->
+  <div class="mode-band" id="mode-band">
+    <span class="mode-badge" id="mode-badge">RECORDED EVIDENCE</span>
+    <p class="mode-note" id="mode-note">Reproducible results from the frozen testnet implementation.</p>
+  </div>
 
   <section id="discovery">
     <div class="sec-head">
@@ -79,11 +109,12 @@
     <!-- Live-only: what the hosted deployment says about itself, right now. -->
     <div id="live-status" class="live-status" hidden></div>
 
+    <h3 class="ask">What does your agent need?</h3>
     <form id="search-form" autocomplete="off">
       <label class="sr-only" for="q">What does your agent need?</label>
-      <input id="q" name="q" type="text" placeholder="What does your agent need?"
+      <input id="q" name="q" type="text" placeholder="Describe it in plain language"
              value="I need something that can condense a long passage of text" maxlength="512">
-      <button type="submit" id="go">Search</button>
+      <button type="submit" id="go">Seek</button>
     </form>
 
     <div class="chips">
@@ -93,55 +124,82 @@
       <button class="chip chip-stop" data-q="book me a dentist appointment">book me a dentist appointment</button>
     </div>
 
-    <div class="filters">
-      <label>Type
-        <select id="f-type">
-          <option value="">Any</option>
-          <option value="http">HTTP</option>
-          <option value="mcp">MCP</option>
-        </select>
-      </label>
-      <label>Network
-        <select id="f-network">
-          <option value="">Any</option>
-          <option value="stellar:testnet">stellar:testnet</option>
-          <option value="stellar:pubnet">stellar:pubnet</option>
-        </select>
-      </label>
-      <label>Scheme
-        <select id="f-scheme">
-          <option value="">Any</option>
-          <option value="exact">exact</option>
-        </select>
-      </label>
-      <p class="note">Filters apply before ranking. Results on the wrong network or scheme are
-        excluded, not penalized.<br>Asset is displayed but is not currently filterable.</p>
-    </div>
-
     <div id="results" aria-live="polite"></div>
+
+    <details class="filters-wrap">
+      <summary>Filters and protocol constraints</summary>
+      <div class="filters">
+        <label>Type
+          <select id="f-type">
+            <option value="">Any</option>
+            <option value="http">HTTP</option>
+            <option value="mcp">MCP</option>
+          </select>
+        </label>
+        <label>Network
+          <select id="f-network">
+            <option value="">Any</option>
+            <option value="stellar:testnet">stellar:testnet</option>
+            <option value="stellar:pubnet">stellar:pubnet</option>
+          </select>
+        </label>
+        <label>Scheme
+          <select id="f-scheme">
+            <option value="">Any</option>
+            <option value="exact">exact</option>
+          </select>
+        </label>
+        <p class="note">Filters apply before ranking. Results on the wrong network or scheme are
+          excluded, not penalized. Asset is displayed but is not currently filterable.</p>
+      </div>
+    </details>
   </section>
 
-  <div class="two-up">
-    <section id="evidence">
-      <div class="sec-head"><span class="num">02</span><h2>Recorded testnet evidence</h2></div>
-      <p class="lede">Historical, reproducible runs. This preview observes no traffic and reports none.</p>
-      <div id="evidence-grid" class="stats"></div>
-      <div id="tx-links" class="tx"></div>
+  <section id="why">
+    <div class="sec-head"><span class="num">02</span><h2>Why x402Seek</h2></div>
+    <!-- Numbered because it is a real sequence. Step three is where the money
+         moves, and it is the step this page cannot perform. -->
+    <div class="why-grid">
+      <article class="why-card">
+        <span class="why-n">01</span>
+        <h3>Discover</h3>
+        <p>Describe what the agent needs.</p>
+      </article>
+      <article class="why-card">
+        <span class="why-n">02</span>
+        <h3>Decide</h3>
+        <p>Recommend the best payable option, or abstain.</p>
+      </article>
+      <article class="why-card">
+        <span class="why-n">03</span>
+        <h3>Pay</h3>
+        <p>Re-check live x402 terms before settlement.</p>
+      </article>
+    </div>
+  </section>
 
-      <!-- Live-only: one recorded hosted settlement. A single event, never
-           presented as traffic, volume or daily stats. -->
-      <div id="hosted-settlement" class="hosted" hidden></div>
-    </section>
+  <section id="evidence">
+    <div class="sec-head"><span class="num">03</span><h2>Recorded testnet evidence</h2></div>
+    <p class="lede">Historical, reproducible runs. This preview observes no traffic and reports none.</p>
+    <div id="evidence-grid" class="stats"></div>
+    <div id="tx-links" class="tx"></div>
 
-    <section id="evaluation">
-      <div class="sec-head"><span class="num">03</span><h2>Retrieval evaluation</h2></div>
-      <div id="benchmark-body"></div>
-    </section>
-  </div>
+    <!-- Live-only: one recorded hosted settlement. A single event, never
+         presented as traffic, volume or daily stats. -->
+    <div id="hosted-settlement" class="hosted" hidden></div>
+  </section>
+
+  <section id="evaluation">
+    <div class="sec-head"><span class="num">04</span><h2>Retrieval evaluation</h2></div>
+    <p class="lede">Why the discovery answer is different from a keyword match.</p>
+    <div id="benchmark-body"></div>
+  </section>
 
   <section id="status">
-    <div class="sec-head"><span class="num">04</span><h2>Current status</h2></div>
-    <div class="two-col" id="status-grid"></div>
+    <div class="sec-head"><span class="num">05</span><h2>Current status</h2></div>
+    <div class="caps" id="caps"></div>
+    <button class="disclose" id="status-more">View technical status</button>
+    <div class="two-col" id="status-grid" hidden></div>
     <p class="disclosure strong" id="status-disclosure">The browser experience is read-only. The hosted facilitator operates on Stellar testnet.</p>
   </section>
 

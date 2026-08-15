@@ -34,6 +34,11 @@
 
 * { box-sizing: border-box; }
 
+/* A class that sets `display` outranks the browser's [hidden] rule, so every
+   collapsed disclosure on this page was rendering open. Stated once, here,
+   rather than remembered at each call site. */
+[hidden] { display: none !important; }
+
 html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
@@ -114,25 +119,6 @@ h1 em { font-style: normal; color: var(--accent); }
 }
 .disclosure.strong { border-left-color: var(--amber); color: var(--ink-2); max-width: none; margin-top: 22px; }
 
-/* The pipeline is a real sequence — a query becomes a decision in this order —
-   so numbering it encodes something true rather than decorating it. */
-.pipeline {
-  list-style: none; margin: 6px 0 0; padding: 20px;
-  display: grid; gap: 4px;
-  background: var(--card); border: 1px solid var(--rule);
-  border-radius: 14px; box-shadow: var(--shadow);
-}
-.pipeline li { padding: 14px 4px; border-bottom: 1px solid var(--rule-soft); }
-.pipeline li:last-child { border-bottom: 0; }
-.pipeline .step {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: var(--accent-soft); color: var(--accent);
-  font: 600 11px/1 var(--mono); margin-right: 9px; vertical-align: 2px;
-}
-.pipeline h3 { display: inline; font-size: 15px; font-weight: 640; margin: 0; letter-spacing: -0.01em; }
-.pipeline p { margin: 6px 0 0 29px; color: var(--ink-2); font-size: 13.5px; }
-
 @media (max-width: 860px) { .hero { grid-template-columns: 1fr; gap: 34px; padding-top: 44px; } }
 
 /* ---- sections ---- */
@@ -145,10 +131,6 @@ section { padding: 34px 0; }
   color: var(--ink-3); margin: 0; font-weight: 620;
 }
 .lede { color: var(--ink-2); font-size: 13.5px; margin: 0 0 18px; max-width: 62ch; }
-
-.two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; align-items: start; }
-.two-up section { padding: 34px 0; }
-@media (max-width: 900px) { .two-up { grid-template-columns: 1fr; gap: 0; } }
 
 /* ---- search ---- */
 
@@ -285,7 +267,7 @@ section { padding: 34px 0; }
 
 /* ---- evidence ---- */
 
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .stat {
   background: var(--card); border: 1px solid var(--rule);
   border-radius: 10px; padding: 16px 16px 14px;
@@ -324,7 +306,8 @@ section { padding: 34px 0; }
 /* ---- status ---- */
 
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-@media (max-width: 720px) { .two-col, .stats { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .stats { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 620px) { .two-col, .stats { grid-template-columns: 1fr; } }
 
 .list { list-style: none; padding: 0; margin: 10px 0 0; }
 .list li {
@@ -348,7 +331,7 @@ footer { border-top: 1px solid var(--rule); margin-top: 40px; background: var(--
   #search-form { flex-direction: column; }
   #go { padding: 14px; }
   .card-head { grid-template-columns: 24px 1fr; }
-  .ring { grid-column: 1 / -1; justify-self: start; }
+  .ring { grid-column: 1 / -1; justify-self: start; grid-auto-flow: column; align-items: center; gap: 8px; }
   .terms { gap: 0 20px; }
 }
 
@@ -417,3 +400,151 @@ body.live-mode .source { color: var(--ok); }
 
 .hosted .disclose-row { padding: 12px 0 0; }
 .hosted .terms.primary { padding: 0; }
+
+/* ---- the worked example ----
+   The hero's job is to explain the product before any of its vocabulary is
+   introduced. A single request drawn top to bottom does that faster than three
+   abstract nouns, and the fork at the bottom is the whole differentiator: this
+   is the only discovery engine on the page that is allowed to say no. */
+
+.eli5 {
+  margin: 0; padding: 18px;
+  background: var(--card); border: 1px solid var(--rule);
+  border-radius: 14px; box-shadow: var(--shadow);
+}
+.eli5 figcaption {
+  font: 600 9.5px/1 var(--mono); letter-spacing: 0.11em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 14px;
+}
+.eli5-node { border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; background: var(--paper); }
+.eli5-node.engine { background: var(--accent-soft); border-color: #dcdcfb; }
+.eli5-node.hit { background: #f2fbf7; border-color: #cfe8dc; }
+.eli5-node.miss { background: var(--rose-soft); border-color: #f3d3da; }
+.eli5-lbl {
+  display: block; font: 600 9px/1 var(--mono); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3); margin-bottom: 7px;
+}
+.eli5-lbl.ok { color: var(--ok); }
+.eli5-lbl.bad { color: var(--rose); }
+.eli5-say { margin: 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+.eli5-node.ask .eli5-say { color: var(--ink); font-size: 14.5px; }
+.eli5-name { margin: 0; font-weight: 650; font-size: 15px; letter-spacing: -0.012em; }
+.eli5-price { margin: 3px 0 0; font: 620 15px/1.2 var(--mono); letter-spacing: -0.02em; }
+.eli5-node.hit .eli5-price { color: var(--ok); }
+.eli5-node.miss .eli5-price { color: var(--rose); }
+.eli5-pills { margin: 9px 0 0; display: flex; flex-wrap: wrap; gap: 5px; }
+
+/* The connector carries the step name, so Search / Rank / Decide survive as
+   labels on the motion rather than as a separate list. */
+.eli5-link { display: flex; align-items: center; gap: 9px; padding: 7px 0 7px 14px; }
+.eli5-link::before {
+  content: ""; width: 1px; height: 20px; background: var(--rule);
+}
+.eli5-link span {
+  font: 600 9px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);
+}
+.eli5-fork { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.eli5-foot { margin: 14px 0 0; font-size: 11.5px; color: var(--ink-3); }
+
+@media (max-width: 420px) { .eli5-fork { grid-template-columns: 1fr; } }
+
+/* ---- pills ---- */
+
+.pills { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 18px 2px; }
+.pill {
+  font: 600 10.5px/1 var(--sans); letter-spacing: 0.01em; padding: 5px 9px;
+  border-radius: 999px; color: var(--ink-2); background: var(--rule-soft);
+  border: 1px solid var(--rule); white-space: nowrap;
+}
+.pill.ok { color: var(--ok); background: #f2fbf7; border-color: #cfe8dc; }
+.pill.bad { color: var(--rose); background: var(--rose-soft); border-color: #f3d3da; }
+
+/* ---- mode band ----
+   Evidence is indigo and historical. Live is green and now. The band is the one
+   place both are described in the same words, so the difference reads as a
+   difference in state rather than in wording. */
+
+.mode-band {
+  display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  margin: 8px 0 4px; padding: 13px 16px;
+  background: var(--card); border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent); border-radius: 10px;
+}
+.mode-badge {
+  font: 600 10px/1 var(--mono); letter-spacing: 0.11em; color: var(--accent); white-space: nowrap;
+}
+.mode-note { margin: 0; font-size: 13px; color: var(--ink-2); }
+
+body.live-mode .mode-band { border-color: #cfe8dc; border-left-color: var(--ok); background: #f5fcf9; }
+body.live-mode .mode-badge { color: var(--ok); }
+
+/* ---- discovery ---- */
+
+.ask {
+  margin: 22px 0 10px; font-size: 19px; font-weight: 650; letter-spacing: -0.02em;
+}
+#search-form { margin-top: 0; }
+
+.filters-wrap { margin-top: 22px; border-top: 1px solid var(--rule); padding-top: 14px; }
+.filters-wrap summary {
+  cursor: pointer; font-size: 13px; color: var(--ink-2); list-style: none;
+}
+.filters-wrap summary::-webkit-details-marker { display: none; }
+.filters-wrap summary::before { content: "+ "; font-family: var(--mono); color: var(--ink-3); }
+.filters-wrap[open] summary::before { content: "− "; }
+.filters-wrap summary:hover { color: var(--accent); }
+.filters-wrap .filters { margin-top: 12px; }
+
+/* ---- why x402Seek ---- */
+
+.why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
+.why-card {
+  background: var(--card); border: 1px solid var(--rule);
+  border-radius: 10px; padding: 18px 18px 16px;
+}
+.why-n { font: 600 10px/1 var(--mono); letter-spacing: 0.09em; color: var(--accent); }
+.why-card h3 { margin: 10px 0 5px; font-size: 16px; font-weight: 650; letter-spacing: -0.015em; }
+.why-card p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+@media (max-width: 720px) { .why-grid { grid-template-columns: 1fr; } }
+
+/* ---- abstention, simplified ---- */
+
+.abstain-spend { display: flex; align-items: baseline; gap: 9px; margin-top: 16px; }
+.abstain-spend .n { font: 660 30px/1 var(--mono); letter-spacing: -0.035em; color: var(--rose); }
+.abstain-spend .k { font-size: 13px; color: var(--ink-2); }
+.abstain .disclose { margin-top: 16px; color: var(--rose); }
+.abstain-detail { margin-top: 12px; }
+.abstain-detail .gauge { margin-top: 12px; }
+
+/* ---- status as capabilities ---- */
+
+.caps { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 16px; }
+.cap-col {
+  background: var(--card); border: 1px solid var(--rule);
+  border-radius: 10px; padding: 16px 18px 8px;
+}
+.cap-col .k { font: 600 10px/1 var(--mono); letter-spacing: 0.1em; color: var(--ink-3); }
+.cap-col .list li { font-size: 13.5px; color: var(--ink); }
+.cap-col .list.planned li { color: var(--ink-2); }
+#status-grid { margin-top: 14px; }
+@media (max-width: 620px) { .caps { grid-template-columns: 1fr; } }
+
+/* ---- hosted settlement as a proof card ---- */
+
+.hosted-lead { display: flex; align-items: baseline; gap: 9px; margin-bottom: 14px; }
+.hosted-lead .n { font: 660 28px/1 var(--mono); letter-spacing: -0.035em; color: var(--ok); }
+.hosted-lead .k { font-size: 13px; color: var(--ink-2); }
+.checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+body.live-mode .hosted { border-color: #cfe8dc; }
+
+/* ---- live mode, felt rather than read ---- */
+
+body.live-mode #go { background: var(--ok); }
+body.live-mode #go:hover { background: #0c6544; }
+body.live-mode #discovery .sec-head .num { color: var(--ok); }
+body.live-mode #mode-live.is-active { color: var(--ok); }
+body.live-mode #q:focus { outline-color: var(--ok); }
+body.live-mode .chip:hover { border-color: var(--ok); color: var(--ok); }
+
+/* "0 USDC" is the figure. "recommended" is the unit it is measured in. */
+.eli5-price .unit { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink-2); }

@@ -211,6 +211,73 @@ describe("the public surface", () => {
     expect(status.planned.join(" ")).toContain("upto");
   });
 
+  it("explains the product in static markup, including the refusal branch", async () => {
+    // The hero has to survive a blocked script. A visitor who never runs app.js
+    // should still be able to read what x402Seek does and what it does instead
+    // of recommending a bad match.
+    const html = (await app.inject({ method: "GET", url: "/" })).body;
+    expect(html).toContain("x402Seek recommends a payable\n        service, or recommends none");
+    expect(html).toContain("Text Summarizer");
+    expect(html).toContain("Abstain");
+    // Read as a person reads it, since the figure and its unit are separate spans.
+    const text = html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
+    expect(text).toContain("0 USDC recommended");
+    expect(html).toContain("An illustration, not a live query.");
+    // Three steps, named, in order.
+    for (const step of ["Discover", "Decide", "Pay"]) expect(html).toContain(`<h3>${step}</h3>`);
+  });
+
+  it("names the active data source in a band, not only in a tab", async () => {
+    const html = (await app.inject({ method: "GET", url: "/" })).body;
+    const script = (await app.inject({ method: "GET", url: "/app.js" })).body;
+    // Static default is the recorded source; the live wording is script-side.
+    expect(html).toContain('id="mode-band"');
+    expect(html).toContain("RECORDED EVIDENCE");
+    expect(html).toContain("Reproducible results from the frozen testnet implementation.");
+    expect(script).toContain("● LIVE TESTNET");
+    expect(script).toContain("Connected to the hosted x402Seek facilitator on Stellar testnet.");
+  });
+
+  it("asks the question in the user's words and labels the action Seek", async () => {
+    const html = (await app.inject({ method: "GET", url: "/" })).body;
+    expect(html).toContain("What does your agent need?");
+    expect(html).toMatch(/<button type="submit" id="go">Seek<\/button>/);
+    // Filters are still reachable, just no longer competing with the result.
+    expect(html).toContain('id="f-type"');
+    expect(html).toContain('id="f-network"');
+    expect(html).toContain('id="f-scheme"');
+  });
+
+  it("puts capabilities before the changelog, without dropping either list", async () => {
+    const status = (await app.inject({ method: "GET", url: "/api/evidence" })).json().status;
+    expect(status.liveNow).toContain("Discovery");
+    expect(status.liveNow).toContain("Fee sponsorship");
+    expect(status.next).toContain("Pubnet");
+    // The summary is a summary. The full lists remain the authority.
+    expect(status.liveNow.length).toBeLessThan(status.built.length);
+    expect(status.built).toContain("Hosted Stellar testnet facilitator");
+    expect((await app.inject({ method: "GET", url: "/" })).body).toContain("View technical status");
+  });
+
+  it("says ownership and network in words, keeping the protocol values", async () => {
+    const script = (await app.inject({ method: "GET", url: "/app.js" })).body;
+    expect(script).toContain("Ownership verified");
+    expect(script).toContain("Stellar Testnet");
+    // TOFU and the raw ids are explained rather than erased.
+    expect(script).toContain("TOFU ownership binding");
+    expect(script).toContain("stellar:testnet");
+    expect(script).toContain("base units");
+    expect(script).toContain("Asset contract");
+  });
+
+  it("keeps the abstention reason code available as detail", async () => {
+    const script = (await app.inject({ method: "GET", url: "/app.js" })).body;
+    expect(script).toContain("No service was relevant enough to recommend spending on.");
+    expect(script).toContain("0 USDC");
+    // The code is not the headline, but it is still on the page.
+    expect(script).toContain("abstained.reason");
+  });
+
   it("never reports live traffic in its evidence", async () => {
     const body = (await app.inject({ method: "GET", url: "/api/evidence" })).json();
     const text = JSON.stringify(body).toLowerCase();

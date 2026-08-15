@@ -264,6 +264,17 @@ describe("the browser surface", () => {
     expect(script).toContain("View on Stellar Expert");
   });
 
+  it("renders the hosted amount as the decimal the API reports, not as base units", async () => {
+    // The settlement endpoint reports 0.0010000, already human. Converting it a
+    // second time printed 0.0000000 USDC on a proof card, which is the one place
+    // on the page a wrong number is worst.
+    const settlement = (await app.inject({ method: "GET", url: "/api/live/settlement" })).json();
+    expect(settlement.amount).toMatch(/^\d+\.\d+$/);
+    expect(Number(settlement.amount)).toBeGreaterThan(0);
+    expect(script).toContain("trimZeros(s.amount)");
+    expect(script).not.toContain("displayPrice(s.amount)");
+  });
+
   it("labels the data source in both modes", () => {
     expect(html).toContain('id="discovery-source"');
     expect(script).toContain("Live testnet");

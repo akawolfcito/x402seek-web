@@ -120,6 +120,22 @@ export const STATUS = {
     ".well-known/x402 domain binding",
   ],
   /**
+   * Short labels for the same two lists above.
+   *
+   * Eleven built items is a changelog, and a reader scanning for thirty seconds
+   * does not read a changelog. These name the capabilities a visitor cares
+   * about; the full lists stay one click away and are the authority. Nothing
+   * appears here that is not already in `built` or `planned`.
+   */
+  liveNow: [
+    "Discovery",
+    "Stellar settlement",
+    "Fee sponsorship",
+    "Automatic cataloging",
+    "Hosted seller",
+  ],
+  next: ["Pubnet", "upto", "Contract accounts", "Security review"],
+  /**
    * Two separate facts, and both need saying.
    *
    * The previous wording said the facilitator was not operated publicly. That

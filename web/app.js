@@ -39,6 +39,33 @@ function humanPrice(amount) {
   return (n / 1e7).toFixed(7);
 }
 
+/**
+ * The same number, without the padding zeros: 0.0010000 reads as 0.001.
+ *
+ * Trimming trailing zeros is exact, not rounding, and it bails out rather than
+ * ever printing a bare 0 for a price that is not zero. The atomic amount stays
+ * on the card, under "View details".
+ */
+function trimZeros(decimal) {
+  const text = String(decimal);
+  if (!/^\d+\.\d+$/.test(text)) return text;
+  const trimmed = text.replace(/0+$/, "").replace(/\.$/, "");
+  return trimmed === "" || Number(trimmed) === 0 ? text : trimmed;
+}
+
+/** Base units to a price a person reads. Takes atomic amounts, not decimals. */
+const displayPrice = (amount) => trimZeros(humanPrice(amount));
+
+/** The protocol id, said the way a person says it. The exact value stays in details. */
+const networkLabel = (network) =>
+  ({ "stellar:testnet": "Stellar Testnet", "stellar:pubnet": "Stellar Pubnet" })[network] ?? network;
+
+const pill = (text, tone, title) => {
+  const p = el("span", `pill${tone ? ` ${tone}` : ""}`, text);
+  if (title) p.title = title;
+  return p;
+};
+
 const shortKey = (k) => (k && k.length > 14 ? `${k.slice(0, 6)}…${k.slice(-4)}` : k || "—");
 const assetLabel = (contract) => {
   if (contract === EVIDENCE?.settlement?.assetContract) return "USDC (testnet)";
@@ -75,27 +102,6 @@ function relevanceRing(score) {
   return box;
 }
 
-function termsBlock(accepts, listing) {
-  const dl = el("dl", "terms");
-  const add = (k, v, title) => {
-    const wrap = el("div", "term");
-    if (title) wrap.title = title;
-    wrap.append(el("dt", null, k), el("dd", null, v));
-    dl.append(wrap);
-  };
-  add("Network", accepts.network);
-  add("Scheme", accepts.scheme);
-  add("Asset", assetLabel(accepts.asset), accepts.asset);
-  add("Price", humanPrice(accepts.amount), `${accepts.amount} base units`);
-  add("payTo", shortKey(accepts.payTo), accepts.payTo);
-  add(
-    "Ownership",
-    listing.ownershipBinding,
-    "Trust on first use: bound to the payTo seen at first settlement. x402 proves who received a payment, not who controls a URL.",
-  );
-  return dl;
-}
-
 function detailBlock(title, body) {
   const box = el("div", "detail");
   box.append(el("h4", null, title));
@@ -123,6 +129,7 @@ function card(listing, relevance, rank) {
   if (relevance !== undefined) head.append(relevanceRing(relevance));
   root.append(head);
 
+  root.append(verdictPills(accepts, listing, relevance));
   root.append(primaryTerms(accepts, listing));
   root.append(
     el("p", "origin-note", "Testnet evidence resource. Local origin used in the recorded run."),
@@ -144,6 +151,21 @@ function card(listing, relevance, rank) {
   if (listing.method) addRes("Method", listing.method);
   addRes("Cataloged by tx", shortKey(listing.lastSettlementTx));
   details.append(detailBlock("Resource", res));
+
+  // The exact protocol values, unabbreviated. Nothing shown above replaces them.
+  const raw = el("dl", "terms");
+  const addRaw = (k, v) => {
+    const w = el("div", "term");
+    w.append(el("dt", null, k), el("dd", null, v));
+    raw.append(w);
+  };
+  addRaw("Network", accepts.network ?? "—");
+  addRaw("Scheme", accepts.scheme ?? "—");
+  addRaw("Asset contract", accepts.asset ?? "—");
+  addRaw("Amount", `${accepts.amount} base units`);
+  addRaw("payTo", accepts.payTo ?? "—");
+  addRaw("Ownership binding", listing.ownershipBinding ?? "—");
+  details.append(detailBlock("Payment terms", raw));
 
   const info = listing.extensions?.bazaar?.info ?? listing.discoveryInfo;
   if (info) {
@@ -183,11 +205,11 @@ function card(listing, relevance, rank) {
 }
 
 /**
- * The three things a decision needs, and nothing else.
+ * What a decision needs, and nothing else.
  *
- * Price, where it settles, and how strongly ownership is evidenced. Everything
- * else is protocol detail that belongs behind "View details" rather than in the
- * first thing a reader scans.
+ * Price and where it settles, said in words a reader already knows. The exact
+ * protocol strings are not discarded: they sit on the title attribute here and
+ * in full under "View details".
  */
 function primaryTerms(accepts, listing) {
   const dl = el("dl", "terms primary");
@@ -197,14 +219,36 @@ function primaryTerms(accepts, listing) {
     w.append(el("dt", null, k), el("dd", null, v));
     dl.append(w);
   };
-  add("Price", `${humanPrice(accepts.amount)} ${assetLabel(accepts.asset)}`, accepts.asset);
-  add("Settles on", `${accepts.network} · ${accepts.scheme}`);
-  add(
-    "Ownership",
-    listing.ownershipBinding === "tofu" ? "TOFU verified" : listing.ownershipBinding,
-    "Trust on first use: bound to the payTo seen at first settlement. x402 proves who received a payment, not who controls a URL.",
-  );
+  add("Price", `${displayPrice(accepts.amount)} ${assetLabel(accepts.asset)}`, accepts.asset);
+  add("Settles on", networkLabel(accepts.network), `${accepts.network} · ${accepts.scheme}`);
   return dl;
+}
+
+/**
+ * The card's verdict line: three claims a non-technical reader can act on.
+ *
+ * Each one restates something the server already decided. "Relevant" is only
+ * shown when the engine returned a score, which it does only for results that
+ * cleared the abstention threshold.
+ */
+function verdictPills(accepts, listing, relevance) {
+  const row = el("div", "pills");
+  if (relevance !== undefined) {
+    row.append(pill("Relevant", "ok", `Dense cosine ${relevance.toFixed(4)} against the query.`));
+  }
+  if (accepts.amount !== undefined) {
+    row.append(pill("Payable", "ok", `${accepts.amount} base units, scheme ${accepts.scheme}.`));
+  }
+  if (listing.ownershipBinding === "tofu") {
+    row.append(pill(
+      "Ownership verified",
+      "ok",
+      "TOFU ownership binding: bound to the payTo seen at first settlement. x402 proves who received a payment, not who controls a URL.",
+    ));
+  } else if (listing.ownershipBinding) {
+    row.append(pill(listing.ownershipBinding, null));
+  }
+  return row;
 }
 
 /**
@@ -218,8 +262,18 @@ function primaryTerms(accepts, listing) {
 function renderAbstention(abstained) {
   const box = el("div", "abstain");
   box.append(el("h3", null, "No recommendation"));
-  box.append(el("div", "code", abstained.reason));
-  box.append(el("p", null, "x402Seek did not find a service relevant enough to recommend spending on."));
+  box.append(el("p", null, "No service was relevant enough to recommend spending on."));
+
+  // The figure that matters to whoever holds the wallet.
+  const spend = el("div", "abstain-spend");
+  spend.append(el("span", "n", "0 USDC"), el("span", "k", "recommended"));
+  box.append(spend);
+
+  // The measurement that produced the refusal, for the reader who wants to
+  // check the claim rather than take it.
+  const detail = el("div", "abstain-detail");
+  detail.hidden = true;
+  detail.append(el("div", "code", abstained.reason));
 
   if (Number.isFinite(abstained.topScore) && Number.isFinite(abstained.threshold)) {
     const gauge = el("div", "gauge");
@@ -240,8 +294,15 @@ function renderAbstention(abstained) {
     legend.append(left, right);
 
     gauge.append(bar, legend);
-    box.append(gauge);
+    detail.append(gauge);
   }
+
+  const toggle = el("button", "disclose", "Why");
+  toggle.addEventListener("click", () => {
+    detail.hidden = !detail.hidden;
+    toggle.textContent = detail.hidden ? "Why" : "Hide detail";
+  });
+  box.append(toggle, detail);
   return box;
 }
 
@@ -349,8 +410,8 @@ function renderEvidence(e) {
      reference retriever and dense, and a gap is easier to see than to read. */
   const body = $("#benchmark-body");
   body.replaceChildren();
-  const bars = el("div", "bars");
-  for (const r of e.benchmark.retrievers) {
+
+  const barRow = (r) => {
     const row = el("div", `bar-row${r.shipped ? " shipped" : r.reference ? " ref" : ""}`);
     const name = el("div", "bar-name");
     name.append(document.createTextNode(r.name));
@@ -362,26 +423,56 @@ function renderEvidence(e) {
     const left = el("div");
     left.append(name, track);
     row.append(left, el("div", "bar-val", `${r.ndcgAt10.toFixed(1)}%`));
-    bars.append(row);
-  }
+    return row;
+  };
+
+  // The argument is one gap: what ships against the naive baseline. The two
+  // intermediate retrievers are real and stay one click away, but putting four
+  // bars up front makes the reader do the comparison themselves.
+  const headline = e.benchmark.retrievers.filter((r) => r.shipped || r.reference);
+  const rest = e.benchmark.retrievers.filter((r) => !r.shipped && !r.reference);
+
+  const bars = el("div", "bars");
+  for (const r of headline) bars.append(barRow(r));
   body.append(bars);
+
   // The caveat is never hidden. The method behind it is.
   body.append(el("p", "caveat", e.benchmark.caveat));
   body.append(el("p", "meta",
     `${e.benchmark.corpusDocuments} listings · ${e.benchmark.queriesTotal} queries · ` +
     `${e.benchmark.queriesHeldOut} held-out`));
-  if (e.benchmark.methodology) {
-    const method = el("p", "lede", e.benchmark.methodology);
-    method.hidden = true;
-    const show = el("button", "disclose", "Methodology");
+
+  const deep = el("div");
+  deep.hidden = true;
+  if (rest.length) {
+    const more = el("div", "bars");
+    for (const r of rest) more.append(barRow(r));
+    deep.append(more);
+  }
+  if (e.benchmark.methodology) deep.append(el("p", "lede", e.benchmark.methodology));
+  if (deep.childElementCount) {
+    const show = el("button", "disclose", "Methodology and all retrievers");
     show.addEventListener("click", () => {
-      method.hidden = !method.hidden;
-      show.textContent = method.hidden ? "Methodology" : "Hide methodology";
+      deep.hidden = !deep.hidden;
+      show.textContent = deep.hidden ? "Methodology and all retrievers" : "Hide methodology";
     });
-    body.append(show, method);
+    body.append(show, deep);
   }
 
-  /* status */
+  /* status: capabilities first, the full changelog behind a click */
+  const caps = (title, items, cls) => {
+    const box = el("div", "cap-col");
+    box.append(el("div", "k", title));
+    const ul = el("ul", `list ${cls}`);
+    for (const item of items) ul.append(el("li", null, item));
+    box.append(ul);
+    return box;
+  };
+  $("#caps").replaceChildren(
+    caps("LIVE NOW", e.status.liveNow ?? e.status.built, "built"),
+    caps("NEXT", e.status.next ?? e.status.planned, "planned"),
+  );
+
   const col = (title, items, cls) => {
     const box = el("div", "stat");
     box.append(el("div", "k", title));
@@ -390,10 +481,16 @@ function renderEvidence(e) {
     box.append(ul);
     return box;
   };
-  $("#status-grid").replaceChildren(
+  const grid = $("#status-grid");
+  grid.replaceChildren(
     col("BUILT / EVIDENCED", e.status.built, "built"),
     col("PLANNED", e.status.planned, "planned"),
   );
+  const statusMore = $("#status-more");
+  statusMore.addEventListener("click", () => {
+    grid.hidden = !grid.hidden;
+    statusMore.textContent = grid.hidden ? "View technical status" : "Hide technical status";
+  });
 
   $("#provenance").textContent =
     `Preview catalog: ${e.snapshot.listings} listings from recorded testnet runs · ` +
@@ -433,6 +530,7 @@ function liveCard(item, relevance, rank) {
   if (relevance !== undefined) head.append(relevanceRing(relevance));
   card.append(head);
 
+  card.append(verdictPills(accepts, item, relevance));
   card.append(primaryTerms(accepts, item));
 
   // Protocol detail belongs behind a disclosure, not in the first scan.
@@ -445,9 +543,11 @@ function liveCard(item, relevance, rank) {
     dl.append(w);
   };
   add("Resource URL", item.resource);
+  add("Network", accepts.network || "—");
+  add("Scheme", accepts.scheme || "—");
   add("payTo", accepts.payTo || "—");
-  add("Asset", accepts.asset || "—");
-  add("Amount", `${accepts.amount} atomic units`);
+  add("Asset contract", accepts.asset || "—");
+  add("Amount", `${accepts.amount} base units`);
   add("Ownership binding", item.ownershipBinding || "—");
   details.append(detailBlock("Protocol details", dl));
 
@@ -551,10 +651,14 @@ async function renderHostedSettlement() {
   try {
     const s = await (await fetch("/api/live/settlement")).json();
     box.replaceChildren();
-    box.append(el("h3", "hosted-title", "Hosted settlement"));
+    box.append(el("h3", "hosted-title", "Hosted testnet settlement"));
 
-    // Three figures carry the story. The addresses are real evidence but they
-    // are not what a reader needs in the first two seconds.
+    // One headline figure, then what it cost and what it left behind. The
+    // addresses are real evidence but they are not what a reader needs first.
+    const lead = el("div", "hosted-lead");
+    lead.append(el("span", "n", `${trimZeros(s.amount)} USDC`), el("span", "k", "paid"));
+    box.append(lead);
+
     const dl = el("dl", "terms primary");
     const add = (k, v, title) => {
       const w = el("div", "term");
@@ -562,10 +666,21 @@ async function renderHostedSettlement() {
       w.append(el("dt", null, k), el("dd", null, v));
       dl.append(w);
     };
-    add("Amount", `${s.amount} USDC`);
-    add("Buyer XLM fee", "0", "Fee sponsorship: the buyer spent no XLM");
+    add("Buyer network fee", "0 XLM", "Fee sponsorship: the buyer spent no XLM");
     add("Facilitator fee", `${s.facilitatorFeeXlm} XLM`);
     box.append(dl);
+
+    // Two properties this settlement demonstrated, named from the status list
+    // rather than asserted here, so the card cannot outrun the evidence.
+    const built = EVIDENCE?.status?.built ?? [];
+    const checks = el("div", "checks");
+    const check = (label, present) => {
+      if (!present) return;
+      checks.append(pill(`${label} ✓`, "ok"));
+    };
+    check("Automatic catalog", built.some((b) => /automatic .*catalog/i.test(b)));
+    check("Persistent after restart", built.some((b) => /restart-safe/i.test(b)));
+    if (checks.childElementCount) box.append(checks);
 
     const link = el("a", "disclose-link", "View on Stellar Expert");
     link.href = (EVIDENCE?.explorerBase ?? "https://stellar.expert/explorer/testnet/tx/") + s.transaction;
@@ -573,7 +688,12 @@ async function renderHostedSettlement() {
     link.rel = "noopener noreferrer";
 
     const parties = el("dl", "terms");
-    for (const [k, v] of [["Buyer", s.buyer], ["Seller", s.seller], ["Facilitator", s.facilitator]]) {
+    for (const [k, v] of [
+      ["Buyer", s.buyer],
+      ["Seller", s.seller],
+      ["Facilitator", s.facilitator],
+      ["Transaction", s.transaction],
+    ]) {
       const w = el("div", "term");
       w.title = v;
       w.append(el("dt", null, k), el("dd", null, shortKey(v)));
@@ -606,6 +726,14 @@ async function setMode(mode) {
   $("#discovery-source").textContent = isLive()
     ? "Live testnet"
     : "Recorded evidence";
+
+  // Said once, in a band the reader cannot scroll past, so no section below it
+  // can be mistaken for the other source.
+  $("#mode-badge").textContent = isLive() ? "● LIVE TESTNET" : "RECORDED EVIDENCE";
+  $("#mode-note").textContent = isLive()
+    ? "Connected to the hosted x402Seek facilitator on Stellar testnet."
+    : "Reproducible results from the frozen testnet implementation.";
+  $("#cta-primary").textContent = isLive() ? "Try live discovery" : "Try discovery";
 
   $("#live-status").hidden = !isLive();
   $("#hosted-settlement").hidden = !isLive();

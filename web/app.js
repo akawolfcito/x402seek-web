@@ -1,12 +1,21 @@
 /* x402Seek preview UI. No framework: one search box, a card list and four
    static sections do not justify one, and a smaller dependency graph is easier
-   to audit for a service that exists to be audited. */
+   to audit for a service that exists to be audited.
+
+   This file renders; it does not decide. Every value shown comes from
+   /api/discovery/search or /api/evidence, and nothing is computed here that the
+   server did not already compute. */
 
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, cls, text) => {
   const node = document.createElement(tag);
   if (cls) node.className = cls;
   if (text !== undefined) node.textContent = text;
+  return node;
+};
+const svg = (tag, attrs = {}) => {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
   return node;
 };
 
@@ -28,7 +37,34 @@ const assetLabel = (contract) => {
 
 /* ---------- results ---------- */
 
-function termsBlock(accepts, relevance, listing) {
+/** Cosine as an arc. The only place on the page a number becomes a shape. */
+function relevanceRing(score) {
+  const R = 20;
+  const C = 2 * Math.PI * R;
+  const box = el("div", "ring");
+  // The ring reads to two decimals; the full cosine stays available on hover so
+  // showing it twice on the card is not needed.
+  box.title = `dense cosine ${score.toFixed(4)} — the same score the ranking used`;
+  const s = svg("svg", { width: 54, height: 54, viewBox: "0 0 54 54" });
+  s.append(
+    svg("circle", { class: "track", cx: 27, cy: 27, r: R, fill: "none", "stroke-width": 4 }),
+    svg("circle", {
+      class: "arc",
+      cx: 27, cy: 27, r: R, fill: "none", "stroke-width": 4,
+      "stroke-dasharray": `${Math.max(0, Math.min(1, score)) * C} ${C}`,
+    }),
+  );
+  const label = svg("text", {
+    class: "val", x: 27, y: 27, "text-anchor": "middle",
+    "dominant-baseline": "central", transform: "rotate(90 27 27)",
+  });
+  label.textContent = score.toFixed(2);
+  s.append(label);
+  box.append(s, el("span", "cap", "relevance"));
+  return box;
+}
+
+function termsBlock(accepts, listing) {
   const dl = el("dl", "terms");
   const add = (k, v, title) => {
     const wrap = el("div", "term");
@@ -39,10 +75,13 @@ function termsBlock(accepts, relevance, listing) {
   add("Network", accepts.network);
   add("Scheme", accepts.scheme);
   add("Asset", assetLabel(accepts.asset), accepts.asset);
-  add("Price", `${humanPrice(accepts.amount)} (${accepts.amount} base units)`);
+  add("Price", humanPrice(accepts.amount), `${accepts.amount} base units`);
   add("payTo", shortKey(accepts.payTo), accepts.payTo);
-  add("Ownership", listing.ownershipBinding, "Trust on first use: bound to the payTo seen at first settlement. x402 proves who received a payment, not who controls a URL.");
-  if (relevance !== undefined) add("Relevance", relevance.toFixed(4), "Dense cosine against the query, the same score the ranking used.");
+  add(
+    "Ownership",
+    listing.ownershipBinding,
+    "Trust on first use: bound to the payTo seen at first settlement. x402 proves who received a payment, not who controls a URL.",
+  );
   return dl;
 }
 
@@ -53,29 +92,30 @@ function detailBlock(title, body) {
   return box;
 }
 
-function card(listing, relevance) {
+function card(listing, relevance, rank) {
   const root = el("article", "card");
   const accepts = listing.accepts?.[0] ?? {};
 
   const head = el("div", "card-head");
-  head.append(el("span", "card-name", listing.serviceName || listing.canonicalKey));
-  head.append(el("span", `kind ${listing.type}`, listing.type.toUpperCase()));
-  if (relevance !== undefined) {
-    const s = el("span", "score");
-    s.append(el("span", null, "relevance "), document.createTextNode(relevance.toFixed(4)));
-    head.append(s);
-  }
+  head.append(el("span", "rank", String(rank).padStart(2, "0")));
+
+  const mid = el("div");
+  const title = el("div", "card-title");
+  title.append(
+    el("span", "card-name", listing.serviceName || listing.canonicalKey),
+    el("span", `kind ${listing.type}`, listing.type.toUpperCase()),
+  );
+  mid.append(title);
+  if (listing.description) mid.append(el("p", "card-desc", listing.description));
+  head.append(mid);
+
+  if (relevance !== undefined) head.append(relevanceRing(relevance));
   root.append(head);
 
-  if (listing.description) root.append(el("p", "card-desc", listing.description));
-
-  const origin = el("p", "origin-note");
-  origin.textContent = listing.type === "mcp"
-    ? "Testnet evidence resource — local origin used in the recorded testnet run."
-    : "Testnet evidence resource — local origin used in the recorded testnet run.";
-  root.append(origin);
-
-  root.append(termsBlock(accepts, relevance, listing));
+  root.append(termsBlock(accepts, listing));
+  root.append(
+    el("p", "origin-note", "Testnet evidence resource — local origin used in the recorded testnet run."),
+  );
 
   /* Expandable detail: resource, schema, provenance. */
   const details = el("div");
@@ -106,7 +146,7 @@ function card(listing, relevance) {
     link.href = (EVIDENCE?.explorerBase ?? "") + listing.lastSettlementTx;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    const p = el("p", "tx-links");
+    const p = el("p", "tx");
     p.append(link);
     details.append(detailBlock("Settlement that cataloged this listing", p));
   }
@@ -125,15 +165,41 @@ function card(listing, relevance) {
   return root;
 }
 
+/**
+ * The abstention state.
+ *
+ * Given the most prominent treatment on the page on purpose: an agent with a
+ * wallet acting on a weak result pays for the wrong service, so refusing is the
+ * feature. The gauge shows the top score against the threshold that rejected it,
+ * because "no results" is a claim the reader should be able to check.
+ */
 function renderAbstention(abstained) {
   const box = el("div", "abstain");
-  box.append(el("h3", null, "NO RECOMMENDATION"));
-  const code = el("code", null, abstained.reason);
-  box.append(code);
+  box.append(el("h3", null, "No recommendation"));
+  box.append(el("div", "code", abstained.reason));
   box.append(el("p", null, "x402Seek did not find a service relevant enough to recommend spending on."));
-  const nums = el("p", "nums");
-  nums.textContent = `top score ${abstained.topScore.toFixed(4)} · threshold ${abstained.threshold}`;
-  box.append(nums);
+
+  if (Number.isFinite(abstained.topScore) && Number.isFinite(abstained.threshold)) {
+    const gauge = el("div", "gauge");
+    const bar = el("div", "gauge-bar");
+    const scale = Math.max(abstained.threshold * 1.6, abstained.topScore * 1.2, 0.01);
+    const fill = el("div", "gauge-fill");
+    fill.style.width = `${Math.min(100, (abstained.topScore / scale) * 100)}%`;
+    const mark = el("div", "gauge-mark");
+    mark.style.left = `${Math.min(100, (abstained.threshold / scale) * 100)}%`;
+    mark.title = "abstention threshold";
+    bar.append(fill, mark);
+
+    const legend = el("div", "gauge-legend");
+    const left = el("span");
+    left.append(document.createTextNode("top score "), el("b", null, abstained.topScore.toFixed(4)));
+    const right = el("span");
+    right.append(document.createTextNode("threshold "), el("b", null, String(abstained.threshold)));
+    legend.append(left, right);
+
+    gauge.append(bar, legend);
+    box.append(gauge);
+  }
   return box;
 }
 
@@ -163,13 +229,15 @@ async function search(query) {
     } else if (!data.resources?.length) {
       results.append(el("p", "empty", "No resources matched those filters."));
     } else {
-      for (const listing of data.resources) {
-        results.append(card(listing, data.relevance?.[listing.canonicalKey]));
-      }
+      data.resources.forEach((listing, i) => {
+        results.append(card(listing, data.relevance?.[listing.canonicalKey], i + 1));
+      });
     }
 
-    const meta = el("p", "empty");
-    meta.textContent = `${data.resources?.length ?? 0} result(s) · ${data.tookMs} ms · abstention threshold ${data.threshold} cosine`;
+    const meta = el("p", "meta");
+    meta.textContent =
+      `${data.resources?.length ?? 0} result(s) · ${data.tookMs} ms · ` +
+      `abstention threshold ${data.threshold} cosine`;
     results.append(meta);
   } catch (error) {
     results.replaceChildren(el("p", "error", `Search failed: ${error.message}`));
@@ -200,36 +268,35 @@ function renderEvidence(e) {
   const links = $("#tx-links");
   links.replaceChildren();
   for (const tx of e.transactions) {
-    const lbl = el("span", "lbl", tx.label);
+    const row = el("div");
     const a = el("a", null, tx.hash);
     a.href = e.explorerBase + tx.hash;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
-    const row = el("div");
-    row.append(lbl, a);
+    row.append(el("span", "lbl", tx.label), a);
     links.append(row);
   }
 
-  /* benchmark */
+  /* benchmark — bars rather than a table: the argument is the gap between the
+     reference retriever and dense, and a gap is easier to see than to read. */
   const body = $("#benchmark-body");
   body.replaceChildren();
-  const table = el("table", "bench");
-  const thead = el("thead");
-  const hr = el("tr");
-  hr.append(el("th", null, "Retriever"), el("th", null, "Held-out nDCG@10"));
-  hr.lastChild.className = "num";
-  thead.append(hr);
-  table.append(thead);
-  const tbody = el("tbody");
+  const bars = el("div", "bars");
   for (const r of e.benchmark.retrievers) {
-    const tr = el("tr", r.shipped ? "shipped" : r.reference ? "ref" : "");
-    tr.append(el("td", null, r.name + (r.shipped ? " — shipped" : "")));
-    const td = el("td", "num", `${r.ndcgAt10.toFixed(1)}%`);
-    tr.append(td);
-    tbody.append(tr);
+    const row = el("div", `bar-row${r.shipped ? " shipped" : r.reference ? " ref" : ""}`);
+    const name = el("div", "bar-name");
+    name.append(document.createTextNode(r.name));
+    if (r.shipped) name.append(el("span", "tag", "shipped"));
+    const track = el("div", "bar-track");
+    const fill = el("div", "bar-fill");
+    fill.style.width = `${Math.max(0, Math.min(100, r.ndcgAt10))}%`;
+    track.append(fill);
+    const left = el("div");
+    left.append(name, track);
+    row.append(left, el("div", "bar-val", `${r.ndcgAt10.toFixed(1)}%`));
+    bars.append(row);
   }
-  table.append(tbody);
-  body.append(table);
+  body.append(bars);
   body.append(el("p", "caveat", e.benchmark.caveat));
   body.append(el("p", "lede",
     `${e.benchmark.corpusDocuments} listings · ${e.benchmark.queriesTotal} queries · ` +

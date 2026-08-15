@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>x402Seek — decision-grade discovery for x402 on Stellar</title>
-<meta name="description" content="Reviewer preview: natural-language discovery, measured ranking and abstention for autonomous x402 payments on Stellar. Discovery only; not a hosted facilitator.">
+<title>x402Seek · decision-grade discovery for x402 on Stellar</title>
+<meta name="description" content="Decision-grade discovery for autonomous x402 payments on Stellar. Natural-language search, measured ranking, and abstention when nothing is relevant enough. Live on Stellar testnet.">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -36,35 +36,36 @@
 
   <section class="hero">
     <div class="hero-copy">
-      <h1>Find what agents<br>can <em>pay</em> for on Stellar.</h1>
+      <h1><em>Seek</em> what's worth paying for on Stellar.</h1>
       <p class="tagline">Decision-grade discovery for autonomous x402 payments.</p>
-      <p class="sub">Agents can already pay. x402Seek helps them decide what to pay for — and
-        say nothing when nothing is worth paying for.</p>
+      <p class="sub">Agents can already pay. x402Seek helps them discover what is worth paying
+        for and abstain when nothing is relevant enough.</p>
+      <p class="sub live-only" id="hero-live" hidden>Hosted discovery and settlement on Stellar testnet.</p>
       <div class="cta-row">
         <a class="cta" href="#discovery">Try discovery</a>
-        <a class="cta ghost" href="#evidence">See the evidence &rarr;</a>
+        <a class="cta ghost" href="#evidence">View evidence</a>
       </div>
       <!-- In the markup, not injected. The script replaces it with the identical
            sentence from /api/evidence; if the script never runs, the disclaimer
            must still be on the page. -->
-      <p class="disclosure" id="disclosure">The public x402Seek preview exposes discovery only. The facilitator is not currently operated as a public settlement service.</p>
+      <p class="disclosure" id="disclosure">The browser experience is read-only. The hosted facilitator operates on Stellar testnet.</p>
     </div>
 
     <ol class="pipeline" aria-label="How a query becomes a payable result">
       <li>
         <span class="step">1</span>
         <h3>Search</h3>
-        <p>A sentence, not a keyword.</p>
+        <p>Describe what the agent needs.</p>
       </li>
       <li>
         <span class="step">2</span>
         <h3>Rank</h3>
-        <p>Dense retrieval, after payability filters.</p>
+        <p>Filter, score, and compare.</p>
       </li>
       <li>
         <span class="step">3</span>
         <h3>Decide</h3>
-        <p>Recommend, or abstain.</p>
+        <p>Recommend or abstain.</p>
       </li>
     </ol>
   </section>
@@ -113,9 +114,8 @@
           <option value="exact">exact</option>
         </select>
       </label>
-      <p class="note">Filters run before scoring. A perfect match on the wrong network is not a
-        lower-ranked result — it is not a result. Asset is shown but not filterable: the Bazaar
-        query type has no asset field.</p>
+      <p class="note">Filters apply before ranking. Results on the wrong network or scheme are
+        excluded, not penalized.<br>Asset is displayed but is not currently filterable.</p>
     </div>
 
     <div id="results" aria-live="polite"></div>
@@ -142,7 +142,7 @@
   <section id="status">
     <div class="sec-head"><span class="num">04</span><h2>Current status</h2></div>
     <div class="two-col" id="status-grid"></div>
-    <p class="disclosure strong" id="status-disclosure">The public x402Seek preview exposes discovery only. The facilitator is not currently operated as a public settlement service.</p>
+    <p class="disclosure strong" id="status-disclosure">The browser experience is read-only. The hosted facilitator operates on Stellar testnet.</p>
   </section>
 
 </main>
@@ -153,9 +153,8 @@
       <span class="wordmark">x402Seek</span>
       <p id="provenance" class="mono"></p>
     </div>
-    <p class="names"><strong>Bazaar</strong> · <strong>x402</strong> · <strong>Stellar</strong> ·
-      <strong>MCP</strong> keep their names. x402Seek is the product built on them.</p>
-    <p class="lic">Apache-2.0 · Discovery preview only — no settlement service is operated here.</p>
+    <p class="names">Built with x402, Stellar, Bazaar discovery, and MCP.</p>
+    <p class="lic">Apache-2.0 · Live on Stellar testnet</p>
   </div>
 </footer>
 

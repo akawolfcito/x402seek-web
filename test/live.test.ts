@@ -74,7 +74,7 @@ const json = (body: unknown, status = 200) =>
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+  fetchMock = vi.fn(async (input: string | URL) => {
     const url = String(input instanceof URL ? input.href : input);
     if (url.startsWith(`${LIVE_FACILITATOR}/health`)) return json(HEALTH);
     if (url.startsWith(`${LIVE_FACILITATOR}/supported`)) return json(SUPPORTED);
@@ -123,7 +123,7 @@ describe("live discovery", () => {
   });
 
   it("passes an abstention through as the hosted facilitator's own answer", async () => {
-    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+    fetchMock.mockImplementation(async (input: string | URL) => {
       const url = String(input);
       if (url.startsWith(`${LIVE_FACILITATOR}/discovery/search`)) {
         return json({
@@ -259,9 +259,14 @@ describe("the browser surface", () => {
     expect(surface).not.toContain("SIGNER");
   });
 
+  it("keeps the recorded transactions reachable behind a disclosure", () => {
+    expect(script).toContain("View recorded transactions");
+    expect(script).toContain("View on Stellar Expert");
+  });
+
   it("labels the data source in both modes", () => {
     expect(html).toContain('id="discovery-source"');
-    expect(script).toContain("Live testnet — hosted facilitator");
+    expect(script).toContain("Live testnet");
     expect(script).toContain("Recorded evidence");
     // And says so when live is down, rather than quietly showing frozen data.
     expect(script).toContain("LIVE_TESTNET_UNAVAILABLE");

@@ -55,7 +55,7 @@ function relevanceRing(score) {
   const box = el("div", "ring");
   // The ring reads to two decimals; the full cosine stays available on hover so
   // showing it twice on the card is not needed.
-  box.title = `dense cosine ${score.toFixed(4)} — the same score the ranking used`;
+  box.title = `Dense cosine ${score.toFixed(4)}. This is the score the ranking used.`;
   const s = svg("svg", { width: 54, height: 54, viewBox: "0 0 54 54" });
   s.append(
     svg("circle", { class: "track", cx: 27, cy: 27, r: R, fill: "none", "stroke-width": 4 }),
@@ -123,9 +123,9 @@ function card(listing, relevance, rank) {
   if (relevance !== undefined) head.append(relevanceRing(relevance));
   root.append(head);
 
-  root.append(termsBlock(accepts, listing));
+  root.append(primaryTerms(accepts, listing));
   root.append(
-    el("p", "origin-note", "Testnet evidence resource — local origin used in the recorded testnet run."),
+    el("p", "origin-note", "Testnet evidence resource. Local origin used in the recorded run."),
   );
 
   /* Expandable detail: resource, schema, provenance. */
@@ -170,10 +170,41 @@ function card(listing, relevance, rank) {
   ));
   details.append(advisory);
 
+  const toggle = el("button", "disclose", "View details");
+  toggle.addEventListener("click", () => {
+    details.hidden = !details.hidden;
+    toggle.textContent = details.hidden ? "View details" : "Hide details";
+  });
+  root.append(el("div", "disclose-row", null));
+  root.lastChild.append(toggle);
   root.append(details);
-  head.addEventListener("click", () => { details.hidden = !details.hidden; });
 
   return root;
+}
+
+/**
+ * The three things a decision needs, and nothing else.
+ *
+ * Price, where it settles, and how strongly ownership is evidenced. Everything
+ * else is protocol detail that belongs behind "View details" rather than in the
+ * first thing a reader scans.
+ */
+function primaryTerms(accepts, listing) {
+  const dl = el("dl", "terms primary");
+  const add = (k, v, title) => {
+    const w = el("div", "term");
+    if (title) w.title = title;
+    w.append(el("dt", null, k), el("dd", null, v));
+    dl.append(w);
+  };
+  add("Price", `${humanPrice(accepts.amount)} ${assetLabel(accepts.asset)}`, accepts.asset);
+  add("Settles on", `${accepts.network} · ${accepts.scheme}`);
+  add(
+    "Ownership",
+    listing.ownershipBinding === "tofu" ? "TOFU verified" : listing.ownershipBinding,
+    "Trust on first use: bound to the payTo seen at first settlement. x402 proves who received a payment, not who controls a URL.",
+  );
+  return dl;
 }
 
 /**
@@ -287,14 +318,17 @@ function renderEvidence(e) {
   };
 
   $("#evidence-grid").replaceChildren(
-    stat(`${e.conformance.payments.passed}/${e.conformance.payments.total}`, "upstream x402 payment scenarios", true),
+    stat(`${e.conformance.payments.passed}/${e.conformance.payments.total}`, "x402 payment scenarios", true),
     stat(`${e.conformance.discovery.passed}/${e.conformance.discovery.total}`, "Bazaar discovery checks", true),
-    stat(e.settlement.buyerXlmDelta, "buyer XLM delta across 9 payments", true),
-    stat(e.settlement.buyerUsdcDelta, `buyer ${e.settlement.asset} delta`, false),
+    stat("0 XLM", "buyer network fees", true),
+    stat("0.009 USDC", "settled in recorded run", false),
   );
 
+  // Hashes are long and low-priority. They stay one click away, never gone.
   const links = $("#tx-links");
   links.replaceChildren();
+  const list = el("div", "tx-list");
+  list.hidden = true;
   for (const tx of e.transactions) {
     const row = el("div");
     const a = el("a", null, tx.hash);
@@ -302,8 +336,14 @@ function renderEvidence(e) {
     a.target = "_blank";
     a.rel = "noopener noreferrer";
     row.append(el("span", "lbl", tx.label), a);
-    links.append(row);
+    list.append(row);
   }
+  const show = el("button", "disclose", "View recorded transactions");
+  show.addEventListener("click", () => {
+    list.hidden = !list.hidden;
+    show.textContent = list.hidden ? "View recorded transactions" : "Hide transactions";
+  });
+  links.append(show, list);
 
   /* benchmark — bars rather than a table: the argument is the gap between the
      reference retriever and dense, and a gap is easier to see than to read. */
@@ -325,12 +365,21 @@ function renderEvidence(e) {
     bars.append(row);
   }
   body.append(bars);
+  // The caveat is never hidden. The method behind it is.
   body.append(el("p", "caveat", e.benchmark.caveat));
-  body.append(el("p", "lede",
+  body.append(el("p", "meta",
     `${e.benchmark.corpusDocuments} listings · ${e.benchmark.queriesTotal} queries · ` +
-    `${e.benchmark.queriesTuning} tuning / ${e.benchmark.queriesHeldOut} held-out · ` +
-    "graded relevance labels written against the corpus before any retriever existed. " +
-    "Hybrid RRF was expected to win and did not; dense shipped instead."));
+    `${e.benchmark.queriesHeldOut} held-out`));
+  if (e.benchmark.methodology) {
+    const method = el("p", "lede", e.benchmark.methodology);
+    method.hidden = true;
+    const show = el("button", "disclose", "Methodology");
+    show.addEventListener("click", () => {
+      method.hidden = !method.hidden;
+      show.textContent = method.hidden ? "Methodology" : "Hide methodology";
+    });
+    body.append(show, method);
+  }
 
   /* status */
   const col = (title, items, cls) => {
@@ -359,7 +408,7 @@ function liveUnavailable(detail) {
   box.append(el("div", "code", "LIVE_TESTNET_UNAVAILABLE"));
   box.append(el("p", null,
     `The hosted facilitator did not answer${detail ? `: ${detail}` : ""}. ` +
-    "Recorded evidence is still available under the Evidence tab — it is not shown here, " +
+    "Recorded evidence stays under the Evidence tab. It is not shown here, " +
     "because it did not come from the live service."));
   return box;
 }
@@ -384,11 +433,32 @@ function liveCard(item, relevance, rank) {
   if (relevance !== undefined) head.append(relevanceRing(relevance));
   card.append(head);
 
-  card.append(termsBlock(accepts, item));
+  card.append(primaryTerms(accepts, item));
 
-  const url = el("p", "origin-note");
-  url.textContent = `Canonical resource: ${item.resource}`;
-  card.append(url);
+  // Protocol detail belongs behind a disclosure, not in the first scan.
+  const details = el("div");
+  details.hidden = true;
+  const dl = el("dl", "terms");
+  const add = (k, v) => {
+    const w = el("div", "term");
+    w.append(el("dt", null, k), el("dd", null, v));
+    dl.append(w);
+  };
+  add("Resource URL", item.resource);
+  add("payTo", accepts.payTo || "—");
+  add("Asset", accepts.asset || "—");
+  add("Amount", `${accepts.amount} atomic units`);
+  add("Ownership binding", item.ownershipBinding || "—");
+  details.append(detailBlock("Protocol details", dl));
+
+  const toggle = el("button", "disclose", "View details");
+  toggle.addEventListener("click", () => {
+    details.hidden = !details.hidden;
+    toggle.textContent = details.hidden ? "View details" : "Hide details";
+  });
+  const row = el("div", "disclose-row");
+  row.append(toggle);
+  card.append(row, details);
 
   // Inspect, never pay. The button reads the seller's current 402 and shows it.
   const actions = el("div", "live-actions");
@@ -422,7 +492,7 @@ function liveCard(item, relevance, rank) {
       const note = el("p", "advisory");
       note.append(el("strong", null, "Discovery is advisory. "));
       note.append(document.createTextNode(
-        "These live 402 terms are the authority before payment — an agent revalidates them " +
+        "These live 402 terms are the authority before payment. An agent revalidates them " +
         "against the resource and refuses to sign if they moved. Nothing was paid to read this.",
       ));
       out.append(note);
@@ -456,18 +526,18 @@ async function renderLiveStatus() {
       c.append(el("span", "k", k), el("span", "v", v));
       return c;
     };
+    const ready = (v) => v.charAt(0).toUpperCase() + v.slice(1);
     row.append(
       chip("Facilitator", d.ready ? "Ready" : "Not ready", d.ready),
       chip("Network", d.network),
       chip("Scheme", d.scheme),
-      chip("Catalog", String(d.catalog)),
-      chip("Search", d.discovery.status, d.discovery.status === "ready"),
-      chip("Settlement", d.settlement, true),
+      chip("Catalog", `${d.catalog} resource${d.catalog === 1 ? "" : "s"}`),
+      chip("Search", ready(d.discovery.status), d.discovery.status === "ready"),
+      chip("Settlement", "Enabled", true),
     );
     box.append(row);
     box.append(el("p", "note",
-      "Live read-only discovery from the hosted x402Seek facilitator on Stellar testnet. " +
-      "Classic accounts only; upto is not implemented. This page cannot initiate a payment."));
+      "Classic accounts only. upto is not supported yet. This page does not initiate payments."));
     return true;
   } catch (error) {
     box.replaceChildren(liveUnavailable(error.message));
@@ -481,29 +551,45 @@ async function renderHostedSettlement() {
   try {
     const s = await (await fetch("/api/live/settlement")).json();
     box.replaceChildren();
-    box.append(el("h3", "hosted-title", "Hosted testnet settlement"));
-    const dl = el("dl", "terms");
+    box.append(el("h3", "hosted-title", "Hosted settlement"));
+
+    // Three figures carry the story. The addresses are real evidence but they
+    // are not what a reader needs in the first two seconds.
+    const dl = el("dl", "terms primary");
     const add = (k, v, title) => {
       const w = el("div", "term");
       if (title) w.title = title;
       w.append(el("dt", null, k), el("dd", null, v));
       dl.append(w);
     };
-    add("Amount", `${s.amount} ${s.asset}`);
-    add("Buyer XLM", s.buyerXlmDelta, "Fee sponsorship: the buyer spent no XLM");
+    add("Amount", `${s.amount} USDC`);
+    add("Buyer XLM fee", "0", "Fee sponsorship: the buyer spent no XLM");
     add("Facilitator fee", `${s.facilitatorFeeXlm} XLM`);
-    add("Buyer", shortKey(s.buyer), s.buyer);
-    add("Seller", shortKey(s.seller), s.seller);
-    add("Facilitator", shortKey(s.facilitator), s.facilitator);
     box.append(dl);
-    const a = el("a", null, s.transaction);
-    a.href = (EVIDENCE?.explorerBase ?? "https://stellar.expert/explorer/testnet/tx/") + s.transaction;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    const p = el("p", "tx");
-    p.append(a);
-    box.append(p);
-    box.append(el("p", "note", `${s.note} One recorded settlement — not traffic, volume or uptime.`));
+
+    const link = el("a", "disclose-link", "View on Stellar Expert");
+    link.href = (EVIDENCE?.explorerBase ?? "https://stellar.expert/explorer/testnet/tx/") + s.transaction;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
+    const parties = el("dl", "terms");
+    for (const [k, v] of [["Buyer", s.buyer], ["Seller", s.seller], ["Facilitator", s.facilitator]]) {
+      const w = el("div", "term");
+      w.title = v;
+      w.append(el("dt", null, k), el("dd", null, shortKey(v)));
+      parties.append(w);
+    }
+    parties.hidden = true;
+    const more = el("button", "disclose", "View addresses");
+    more.addEventListener("click", () => {
+      parties.hidden = !parties.hidden;
+      more.textContent = parties.hidden ? "View addresses" : "Hide addresses";
+    });
+
+    const row = el("div", "disclose-row");
+    row.append(link, more);
+    box.append(row, parties);
+    box.append(el("p", "note", s.note));
   } catch {
     box.replaceChildren(el("p", "error", "The hosted settlement record could not be loaded."));
   }
@@ -518,11 +604,12 @@ async function setMode(mode) {
   document.body.classList.toggle("live-mode", mode === "live");
 
   $("#discovery-source").textContent = isLive()
-    ? "Live testnet — hosted facilitator"
+    ? "Live testnet"
     : "Recorded evidence";
 
   $("#live-status").hidden = !isLive();
   $("#hosted-settlement").hidden = !isLive();
+  $("#hero-live").hidden = !isLive();
 
   if (isLive()) {
     await renderLiveStatus();

@@ -179,15 +179,36 @@ describe("the public surface", () => {
    * with nothing saying the facilitator is not operated. Caught by the local
    * reviewer smoke.
    */
-  it("states discovery-only in the served HTML, without running any script", async () => {
+  it("states the read-only boundary in the served HTML, without running any script", async () => {
     const html = (await app.inject({ method: "GET", url: "/" })).body;
     expect(html).toContain("TESTNET-PROVEN");
     const sentence =
-      "The public x402Seek preview exposes discovery only. The facilitator is not " +
-      "currently operated as a public settlement service.";
+      "The browser experience is read-only. The hosted facilitator operates on Stellar testnet.";
     // Once in the hero, once in the status section.
     expect(html.split(sentence).length - 1).toBe(2);
-    expect(html).toContain("no settlement service is operated here");
+  });
+
+  it("no longer claims the facilitator is unoperated, because it is operated", async () => {
+    // That sentence was true at 762c6e6 and is false now. It must not survive
+    // anywhere in what the browser receives.
+    const surface = [
+      (await app.inject({ method: "GET", url: "/" })).body,
+      (await app.inject({ method: "GET", url: "/app.js" })).body,
+      (await app.inject({ method: "GET", url: "/api/evidence" })).body,
+    ].join("\n");
+
+    expect(surface).not.toContain("not currently operated");
+    expect(surface).not.toContain("no settlement service is operated here");
+    expect(surface).not.toContain("exposes discovery only");
+  });
+
+  it("lists hosted operation as built, not as planned", async () => {
+    const status = (await app.inject({ method: "GET", url: "/api/evidence" })).json().status;
+    expect(status.built.join(" ")).toContain("Hosted Stellar testnet facilitator");
+    expect(status.planned.join(" ").toLowerCase()).not.toContain("hosted facilitator");
+    // The genuinely unbuilt items stay where they are.
+    expect(status.planned.join(" ")).toContain("Stellar pubnet");
+    expect(status.planned.join(" ")).toContain("upto");
   });
 
   it("never reports live traffic in its evidence", async () => {

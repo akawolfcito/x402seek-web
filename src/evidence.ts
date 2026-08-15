@@ -65,10 +65,15 @@ export const BENCHMARK = {
   retrievers: [
     { name: "Reference substring search", ndcgAt10: 22.6, reference: true },
     { name: "BM25", ndcgAt10: 83.0, reference: false },
-    { name: "x402Seek dense retrieval", ndcgAt10: 95.3, reference: false, shipped: true },
+    { name: "x402Seek Dense", ndcgAt10: 95.3, reference: false, shipped: true },
     { name: "Hybrid RRF", ndcgAt10: 93.5, reference: false },
   ],
-  caveat: "Held-out synthetic benchmark — not production accuracy.",
+  caveat: "Synthetic held-out benchmark. Not production accuracy.",
+  /** Kept, but behind a disclosure. The caveat above is never hidden. */
+  methodology:
+    "Relevance labels were written against the corpus before any retriever existed, and " +
+    "tuning touched only the 36 development queries. Hybrid RRF was expected to win and " +
+    "did not, so dense retrieval shipped instead.",
 } as const;
 
 /**
@@ -88,27 +93,41 @@ export const AGENT_DEMO = {
   ],
 } as const;
 
+/**
+ * `built` now leads with hosted operation, because that became true with
+ * HOSTED-E-01. "publicly hosted facilitator" left `planned` for the same
+ * reason: leaving it there would understate what is running.
+ */
 export const STATUS = {
   built: [
-    "exact Stellar testnet settlement",
-    "automatic Bazaar cataloging from settled payments",
-    "persistent natural-language discovery search",
-    "abstention below a calibrated relevance threshold",
-    "MCP discovery → pay → invoke, end to end",
-    "upstream x402 conformance suite, 9/9 and 5/5",
-    "transitive licence audit with a CI gate",
+    "Hosted Stellar testnet facilitator",
+    "Exact USDC settlement",
+    "Fee sponsorship",
+    "Automatic Bazaar cataloging",
+    "Persistent semantic discovery",
+    "Abstention",
+    "MCP discovery, pay, invoke",
+    "Hosted seller with live 402",
+    "Restart-safe catalog and TOFU binding",
+    "Upstream x402 conformance",
+    "Licence audit with CI gate",
   ],
   planned: [
-    "publicly hosted facilitator",
-    "stellar:pubnet",
-    "the upto scheme and its Soroban contract",
-    "contract-account (__check_auth) support",
-    "third-party Audit Bank security review",
+    "Stellar pubnet",
+    "The upto scheme",
+    "Contract-account support",
+    "Third-party security review",
     ".well-known/x402 domain binding",
   ],
+  /**
+   * Two separate facts, and both need saying.
+   *
+   * The previous wording said the facilitator was not operated publicly. That
+   * was true when written and is now false, so it is gone rather than left to
+   * mislead. What remains true is that this page cannot start a payment.
+   */
   disclosure:
-    "The public x402Seek preview exposes discovery only. The facilitator is not " +
-    "currently operated as a public settlement service.",
+    "The browser experience is read-only. The hosted facilitator operates on Stellar testnet.",
 } as const;
 
 export { explorer };

@@ -21,6 +21,17 @@ const svg = (tag, attrs = {}) => {
 
 let EVIDENCE = null;
 
+/**
+ * Which data source the page is showing: "evidence" or "live".
+ *
+ * The two are never blended. Every section that changes with it says which one
+ * it is showing, and a live failure reports itself as a live failure — falling
+ * back to recorded data under a live badge would be the worst thing this page
+ * could do.
+ */
+let MODE = "evidence";
+const isLive = () => MODE === "live";
+
 /** 7-decimal SEP-41 base units → a human figure. Never rounded away to zero. */
 function humanPrice(amount) {
   const n = Number(amount);
@@ -218,26 +229,43 @@ async function search(query) {
   }
 
   try {
-    const response = await fetch(`/api/discovery/search?${params}`);
+    const endpoint = isLive() ? "/api/live/search" : "/api/discovery/search";
+    const response = await fetch(`${endpoint}?${params}`);
     const data = await response.json();
+
+    // A live outage says so. It does not become a search over frozen data.
+    if (response.status === 503 && data.error === "LIVE_TESTNET_UNAVAILABLE") {
+      results.replaceChildren(liveUnavailable(data.detail));
+      return;
+    }
     if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
 
     results.replaceChildren();
 
     if (data.abstained) {
-      results.append(renderAbstention(data.abstained));
+      const box = renderAbstention(data.abstained);
+      if (isLive()) {
+        box.append(el("p", "note", "Answered by the hosted facilitator on Stellar testnet."));
+      }
+      results.append(box);
     } else if (!data.resources?.length) {
       results.append(el("p", "empty", "No resources matched those filters."));
     } else {
       data.resources.forEach((listing, i) => {
-        results.append(card(listing, data.relevance?.[listing.canonicalKey], i + 1));
+        const relevance = data.relevance?.[listing.canonicalKey];
+        results.append(
+          isLive() ? liveCard(listing, relevance, i + 1) : card(listing, relevance, i + 1),
+        );
       });
     }
 
     const meta = el("p", "meta");
-    meta.textContent =
-      `${data.resources?.length ?? 0} result(s) · ${data.tookMs} ms · ` +
-      `abstention threshold ${data.threshold} cosine`;
+    // The live facilitator returns the Bazaar envelope and no timing sidecar,
+    // so the line says what is actually known rather than printing "undefined".
+    meta.textContent = isLive()
+      ? `${data.resources?.length ?? 0} result(s) · live from the hosted facilitator`
+      : `${data.resources?.length ?? 0} result(s) · ${data.tookMs} ms · ` +
+        `abstention threshold ${data.threshold} cosine`;
     results.append(meta);
   } catch (error) {
     results.replaceChildren(el("p", "error", `Search failed: ${error.message}`));
@@ -323,7 +351,190 @@ function renderEvidence(e) {
     `core commit ${e.snapshot.coreCommit.slice(0, 12)}`;
 }
 
+/* ---------- live testnet ---------- */
+
+function liveUnavailable(detail) {
+  const box = el("div", "abstain");
+  box.append(el("h3", null, "Live testnet unavailable"));
+  box.append(el("div", "code", "LIVE_TESTNET_UNAVAILABLE"));
+  box.append(el("p", null,
+    `The hosted facilitator did not answer${detail ? `: ${detail}` : ""}. ` +
+    "Recorded evidence is still available under the Evidence tab — it is not shown here, " +
+    "because it did not come from the live service."));
+  return box;
+}
+
+/** A live resource card. Marked, so it can never read as recorded evidence. */
+function liveCard(item, relevance, rank) {
+  const card = el("article", "card live");
+  const accepts = item.accepts?.[0] ?? {};
+
+  const head = el("div", "card-head");
+  head.append(el("span", "rank", String(rank).padStart(2, "0")));
+  const mid = el("div");
+  const title = el("div", "card-title");
+  title.append(
+    el("span", "card-name", item.serviceName || item.canonicalKey),
+    el("span", `kind ${item.type}`, (item.type || "http").toUpperCase()),
+    el("span", "live-badge", "LIVE TESTNET RESOURCE"),
+  );
+  mid.append(title);
+  if (item.description) mid.append(el("p", "card-desc", item.description));
+  head.append(mid);
+  if (relevance !== undefined) head.append(relevanceRing(relevance));
+  card.append(head);
+
+  card.append(termsBlock(accepts, item));
+
+  const url = el("p", "origin-note");
+  url.textContent = `Canonical resource: ${item.resource}`;
+  card.append(url);
+
+  // Inspect, never pay. The button reads the seller's current 402 and shows it.
+  const actions = el("div", "live-actions");
+  const inspect = el("button", "chip", "Inspect live 402");
+  const out = el("div", "inspect");
+  out.hidden = true;
+  inspect.addEventListener("click", async () => {
+    inspect.disabled = true;
+    out.hidden = false;
+    out.replaceChildren(el("p", "empty", "Reading the seller's current terms…"));
+    try {
+      const r = await fetch(`/api/live/inspect?resource=${encodeURIComponent(item.resource)}`);
+      const d = await r.json();
+      if (!r.ok) {
+        out.replaceChildren(el("p", "error", `Could not read the live 402: ${d.detail || d.error}`));
+        return;
+      }
+      const dl = el("dl", "terms");
+      const add = (k, v) => {
+        const w = el("div", "term");
+        w.append(el("dt", null, k), el("dd", null, v));
+        dl.append(w);
+      };
+      add("Status", `${d.status} Payment Required`);
+      add("Network", d.terms.network);
+      add("Scheme", d.terms.scheme);
+      add("Asset", assetLabel(d.terms.asset));
+      add("Price", humanPrice(d.terms.amount));
+      add("payTo", shortKey(d.terms.payTo));
+      out.replaceChildren(dl);
+      const note = el("p", "advisory");
+      note.append(el("strong", null, "Discovery is advisory. "));
+      note.append(document.createTextNode(
+        "These live 402 terms are the authority before payment — an agent revalidates them " +
+        "against the resource and refuses to sign if they moved. Nothing was paid to read this.",
+      ));
+      out.append(note);
+    } catch (error) {
+      out.replaceChildren(el("p", "error", `Could not read the live 402: ${error.message}`));
+    } finally {
+      inspect.disabled = false;
+    }
+  });
+  actions.append(inspect);
+  card.append(actions, out);
+
+  return card;
+}
+
+async function renderLiveStatus() {
+  const box = $("#live-status");
+  box.hidden = false;
+  box.replaceChildren(el("p", "empty", "Asking the hosted facilitator…"));
+  try {
+    const r = await fetch("/api/live/status");
+    const d = await r.json();
+    if (!r.ok) {
+      box.replaceChildren(liveUnavailable(d.detail));
+      return false;
+    }
+    box.replaceChildren();
+    const row = el("div", "live-row");
+    const chip = (k, v, ok) => {
+      const c = el("div", `live-chip${ok === true ? " ok" : ok === false ? " bad" : ""}`);
+      c.append(el("span", "k", k), el("span", "v", v));
+      return c;
+    };
+    row.append(
+      chip("Facilitator", d.ready ? "Ready" : "Not ready", d.ready),
+      chip("Network", d.network),
+      chip("Scheme", d.scheme),
+      chip("Catalog", String(d.catalog)),
+      chip("Search", d.discovery.status, d.discovery.status === "ready"),
+      chip("Settlement", d.settlement, true),
+    );
+    box.append(row);
+    box.append(el("p", "note",
+      "Live read-only discovery from the hosted x402Seek facilitator on Stellar testnet. " +
+      "Classic accounts only; upto is not implemented. This page cannot initiate a payment."));
+    return true;
+  } catch (error) {
+    box.replaceChildren(liveUnavailable(error.message));
+    return false;
+  }
+}
+
+async function renderHostedSettlement() {
+  const box = $("#hosted-settlement");
+  box.hidden = false;
+  try {
+    const s = await (await fetch("/api/live/settlement")).json();
+    box.replaceChildren();
+    box.append(el("h3", "hosted-title", "Hosted testnet settlement"));
+    const dl = el("dl", "terms");
+    const add = (k, v, title) => {
+      const w = el("div", "term");
+      if (title) w.title = title;
+      w.append(el("dt", null, k), el("dd", null, v));
+      dl.append(w);
+    };
+    add("Amount", `${s.amount} ${s.asset}`);
+    add("Buyer XLM", s.buyerXlmDelta, "Fee sponsorship: the buyer spent no XLM");
+    add("Facilitator fee", `${s.facilitatorFeeXlm} XLM`);
+    add("Buyer", shortKey(s.buyer), s.buyer);
+    add("Seller", shortKey(s.seller), s.seller);
+    add("Facilitator", shortKey(s.facilitator), s.facilitator);
+    box.append(dl);
+    const a = el("a", null, s.transaction);
+    a.href = (EVIDENCE?.explorerBase ?? "https://stellar.expert/explorer/testnet/tx/") + s.transaction;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    const p = el("p", "tx");
+    p.append(a);
+    box.append(p);
+    box.append(el("p", "note", `${s.note} One recorded settlement — not traffic, volume or uptime.`));
+  } catch {
+    box.replaceChildren(el("p", "error", "The hosted settlement record could not be loaded."));
+  }
+}
+
+async function setMode(mode) {
+  MODE = mode;
+  $("#mode-evidence").classList.toggle("is-active", mode === "evidence");
+  $("#mode-live").classList.toggle("is-active", mode === "live");
+  $("#mode-evidence").setAttribute("aria-selected", String(mode === "evidence"));
+  $("#mode-live").setAttribute("aria-selected", String(mode === "live"));
+  document.body.classList.toggle("live-mode", mode === "live");
+
+  $("#discovery-source").textContent = isLive()
+    ? "Live testnet — hosted facilitator"
+    : "Recorded evidence";
+
+  $("#live-status").hidden = !isLive();
+  $("#hosted-settlement").hidden = !isLive();
+
+  if (isLive()) {
+    await renderLiveStatus();
+    await renderHostedSettlement();
+  }
+  await search($("#q").value);
+}
+
 /* ---------- wire up ---------- */
+
+$("#mode-evidence").addEventListener("click", () => setMode("evidence"));
+$("#mode-live").addEventListener("click", () => setMode("live"));
 
 $("#search-form").addEventListener("submit", (event) => {
   event.preventDefault();

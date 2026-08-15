@@ -351,3 +351,49 @@ footer { border-top: 1px solid var(--rule); margin-top: 40px; background: var(--
   .ring { grid-column: 1 / -1; justify-self: start; }
   .terms { gap: 0 20px; }
 }
+
+/* ---- live testnet mode ----
+   A state, not a redesign: the same palette, with green reserved for "this is
+   answering right now" and the source stated wherever it could be mistaken. */
+
+.modes { display: flex; gap: 2px; background: var(--rule-soft); padding: 2px; border-radius: 7px; }
+.mode {
+  border: 0; background: none; color: var(--ink-2); font-family: inherit;
+  font-size: 12.5px; padding: 6px 12px; border-radius: 5px; cursor: pointer;
+}
+.mode.is-active { background: var(--card); color: var(--ink); font-weight: 620; box-shadow: var(--shadow); }
+.mode:hover:not(.is-active) { color: var(--accent); }
+
+.source {
+  margin-left: auto; font: 600 10px/1 var(--mono); letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+body.live-mode .source { color: var(--ok); }
+
+.live-status { margin: 16px 0 4px; }
+.live-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.live-chip {
+  display: flex; flex-direction: column; gap: 4px; padding: 9px 13px;
+  background: var(--card); border: 1px solid var(--rule); border-radius: 8px;
+}
+.live-chip .k { font: 600 9px/1 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
+.live-chip .v { font-family: var(--mono); font-size: 12.5px; color: var(--ink); }
+.live-chip.ok { border-color: #bfe3d2; background: #f2fbf7; }
+.live-chip.ok .v { color: var(--ok); font-weight: 620; }
+.live-chip.bad { border-color: #f3d3da; background: var(--rose-soft); }
+.live-chip.bad .v { color: var(--rose); font-weight: 620; }
+
+.card.live { border-color: #cfe8dc; }
+.live-badge {
+  font: 600 9px/1 var(--mono); letter-spacing: 0.09em; padding: 4px 7px;
+  border-radius: 4px; color: var(--ok); background: #eefaf4; border: 1px solid #cfe8dc;
+}
+
+.live-actions { padding: 0 18px 14px; }
+.inspect { border-top: 1px solid var(--rule-soft); background: #fcfcfe; }
+.inspect .terms { border-top: 0; }
+
+.hosted { margin-top: 22px; padding: 18px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; }
+.hosted-title { font: 600 10px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 12px; }
+.hosted .terms { padding: 0; border-top: 0; }
+.hosted .tx { margin-top: 12px; }

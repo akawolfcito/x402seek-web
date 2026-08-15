@@ -21,6 +21,15 @@ import type { CatalogListing, ResourceType } from "../vendor/catalog/index.js";
 import { toDiscoveryResourcesResponse, toDiscoverySearchResponse } from "../vendor/catalog/index.js";
 import { DEFAULT_ABSTENTION_THRESHOLD, SearchEngine, cosine, embed } from "../vendor/search/index.js";
 import * as evidence from "./evidence.js";
+import {
+  HOSTED_SETTLEMENT,
+  LIVE_FACILITATOR,
+  LiveUnavailableError,
+  inspectLive402,
+  liveResources,
+  liveSearch,
+  liveStatus,
+} from "./live.js";
 import { FrozenCatalogStore } from "./store.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -152,6 +161,64 @@ export function buildServer() {
     },
     abstentionThreshold: DEFAULT_ABSTENTION_THRESHOLD,
   }));
+
+  /**
+   * `GET /api/live/*` — read-only view of the hosted testnet deployment.
+   *
+   * Separate paths from `/api/discovery/*` on purpose: those serve the frozen
+   * evidence catalog, these forward to a live service, and the two must never
+   * be mistaken for one another. A failure here reports itself as a live
+   * failure rather than quietly returning frozen data — a live badge over
+   * recorded data would be the worst outcome this page could produce.
+   */
+  const liveRoute = <T>(work: () => Promise<T>) =>
+    async (_request: unknown, reply: { code(n: number): { send(b: unknown): unknown } }) => {
+      try {
+        return await work();
+      } catch (error) {
+        const detail = error instanceof LiveUnavailableError ? error.message : "unexpected error";
+        return reply.code(503).send({ error: "LIVE_TESTNET_UNAVAILABLE", detail });
+      }
+    };
+
+  app.get("/api/live/status", liveRoute(() => liveStatus()));
+  app.get("/api/live/resources", liveRoute(() => liveResources()));
+  app.get("/api/live/settlement", async () => HOSTED_SETTLEMENT);
+
+  app.get("/api/live/search", async (request, reply) => {
+    const q = request.query as Record<string, unknown>;
+    const query = typeof q.query === "string" ? q.query.trim() : "";
+    if (!query) return reply.code(400).send({ error: "query is required" });
+    if (query.length > MAX_QUERY_LENGTH) {
+      return reply.code(400).send({ error: `query must be ${MAX_QUERY_LENGTH} characters or fewer` });
+    }
+    try {
+      return await liveSearch(query, {
+        type: typeof q.type === "string" ? q.type : "",
+        network: typeof q.network === "string" ? q.network : "",
+        scheme: typeof q.scheme === "string" ? q.scheme : "",
+      });
+    } catch (error) {
+      const detail = error instanceof LiveUnavailableError ? error.message : "unexpected error";
+      return reply.code(503).send({ error: "LIVE_TESTNET_UNAVAILABLE", detail });
+    }
+  });
+
+  /**
+   * Read a live resource's payment terms. Never pays — see `inspectLive402`,
+   * which refuses any URL the live catalog did not publish.
+   */
+  app.get("/api/live/inspect", async (request, reply) => {
+    const q = request.query as Record<string, unknown>;
+    const resource = typeof q.resource === "string" ? q.resource : "";
+    if (!resource) return reply.code(400).send({ error: "resource is required" });
+    try {
+      return await inspectLive402(resource);
+    } catch (error) {
+      const detail = error instanceof LiveUnavailableError ? error.message : "unexpected error";
+      return reply.code(503).send({ error: "LIVE_TESTNET_UNAVAILABLE", detail });
+    }
+  });
 
   /**
    * `GET /api/discovery/resources` — the frozen catalog, Bazaar `items` envelope.

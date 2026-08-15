@@ -16,6 +16,12 @@
       <span class="wordmark">x402Seek</span>
     </a>
     <span class="badge">TESTNET-PROVEN</span>
+    <!-- Two data sources, never blended. The active one is stated on every
+         section that changes with it. -->
+    <div class="modes" role="tablist" aria-label="Data source">
+      <button class="mode is-active" id="mode-evidence" role="tab" aria-selected="true">Evidence</button>
+      <button class="mode" id="mode-live" role="tab" aria-selected="false">Live testnet</button>
+    </div>
     <nav class="nav">
       <a href="#discovery">Discovery</a>
       <a href="#evidence">Evidence</a>
@@ -64,7 +70,13 @@
   </section>
 
   <section id="discovery">
-    <div class="sec-head"><span class="num">01</span><h2>Discovery</h2></div>
+    <div class="sec-head">
+      <span class="num">01</span><h2>Discovery</h2>
+      <span class="source" id="discovery-source">Recorded evidence</span>
+    </div>
+
+    <!-- Live-only: what the hosted deployment says about itself, right now. -->
+    <div id="live-status" class="live-status" hidden></div>
 
     <form id="search-form" autocomplete="off">
       <label class="sr-only" for="q">What does your agent need?</label>
@@ -115,6 +127,10 @@
       <p class="lede">Historical, reproducible runs. This preview observes no traffic and reports none.</p>
       <div id="evidence-grid" class="stats"></div>
       <div id="tx-links" class="tx"></div>
+
+      <!-- Live-only: one recorded hosted settlement. A single event, never
+           presented as traffic, volume or daily stats. -->
+      <div id="hosted-settlement" class="hosted" hidden></div>
     </section>
 
     <section id="evaluation">

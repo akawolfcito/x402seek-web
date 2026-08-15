@@ -287,7 +287,9 @@ describe("the browser surface", () => {
 describe("no route can be used to pay", () => {
   it("exposes only GET live routes", async () => {
     const routes = app.printRoutes({ commonPrefix: false });
-    expect(routes).not.toMatch(/POST|PUT|PATCH|DELETE/);
+    // One write route exists, and it is the demo payment. Nothing else.
+    expect(routes.match(/\((POST|PUT|PATCH|DELETE)\)/g) ?? []).toEqual(["(POST)"]);
+    expect(routes).toContain("demo-payment");
     for (const url of ["/api/live/pay", "/api/live/settle", "/api/live/sign"]) {
       expect((await app.inject({ method: "GET", url })).statusCode).toBe(404);
     }

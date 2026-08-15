@@ -610,7 +610,140 @@ function liveCard(item, relevance, rank) {
   actions.append(inspect);
   card.append(actions, out);
 
+  // Live mode only, and only for the resource the demo is allowed to pay for.
+  if (item.resource === "https://demo-api.testnet.x402seek.xyz/summarize") {
+    card.append(demoPaymentPanel(item));
+  }
+
   return card;
+}
+
+
+/* ---------- the demo payment ----------
+ *
+ * Live mode only. The visitor does not pay: x402Seek's own testnet demo buyer
+ * does, at a fixed price, to a fixed seller. Saying that plainly is the whole
+ * job of this copy, because a page that lets someone trigger a payment and is
+ * vague about whose money it was would be misleading about custody.
+ *
+ * This function sends no payment parameters, because none exist in the request.
+ * It sends a request id so a double click is answered once.
+ */
+function demoPaymentPanel(item) {
+  const box = el("div", "demo");
+
+  const head = el("div", "demo-head");
+  head.append(el("h4", null, "Demo payment"));
+  const facts = el("dl", "terms primary");
+  const add = (k, v) => {
+    const w = el("div", "term");
+    w.append(el("dt", null, k), el("dd", null, v));
+    facts.append(w);
+  };
+  add("Amount", "0.001 USDC");
+  add("Wallet", "No wallet required");
+  add("Paid by", "x402Seek's testnet demo account");
+  head.append(facts);
+  head.append(el("p", "demo-note", "You are not paying. x402Seek's testnet demo account pays."));
+  box.append(head);
+
+  const out = el("div", "demo-out");
+  out.hidden = true;
+
+  const run = el("button", "cta demo-run", "Run demo payment");
+  run.addEventListener("click", async () => {
+    run.disabled = true;
+    out.hidden = false;
+    out.replaceChildren(el("p", "empty", "Reading live terms, then paying…"));
+
+    try {
+      const response = await fetch("/api/live/demo-payment", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ requestId: newRequestId(), text: $("#q").value.slice(0, 500) }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || data.status === "refused") {
+        out.replaceChildren(demoRefusal(data));
+        return;
+      }
+      out.replaceChildren(demoSettled(data));
+    } catch {
+      out.replaceChildren(
+        demoRefusal({
+          reason: "DEMO_UNAVAILABLE",
+          detail: "The demo payment service could not be reached. Everything else still works.",
+        }),
+      );
+    } finally {
+      run.disabled = false;
+    }
+  });
+
+  box.append(run, out);
+  return box;
+}
+
+/** A request id, so an impatient second click is answered rather than paid. */
+function newRequestId() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  return `web-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function demoRefusal(data) {
+  const box = el("div", "demo-refused");
+  box.append(el("h5", null, "No payment was made"));
+  box.append(el("p", null, data.detail ?? "The demo could not run just now."));
+  if (data.reason) box.append(el("div", "code", data.reason));
+  box.append(
+    el("p", "note", "Discovery, abstention, live 402 inspection and the recorded evidence are unaffected."),
+  );
+  return box;
+}
+
+function demoSettled(data) {
+  const box = el("div", "demo-settled");
+  box.append(el("h5", null, "Payment settled"));
+
+  const lead = el("div", "hosted-lead");
+  lead.append(el("span", "n", data.amountDisplay ?? "0.001 USDC"), el("span", "k", "paid"));
+  box.append(lead);
+
+  const dl = el("dl", "terms primary");
+  const add = (k, v, title) => {
+    const w = el("div", "term");
+    if (title) w.title = title;
+    w.append(el("dt", null, k), el("dd", null, v));
+    dl.append(w);
+  };
+  add("Payer", "x402Seek demo buyer");
+  add("Network", networkLabel(data.network));
+  if (data.seller?.status) add("Seller", `HTTP ${data.seller.status}`);
+  box.append(dl);
+
+  const summary = data.seller?.result?.summary;
+  if (summary) {
+    const result = el("div", "demo-result");
+    result.append(el("span", "k", "Seller result"), el("p", null, summary));
+    box.append(result);
+  }
+
+  if (data.transaction) {
+    const link = el("a", "disclose-link", "View on Stellar Expert");
+    link.href = data.explorer ?? `https://stellar.expert/explorer/testnet/tx/${data.transaction}`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    const row = el("div", "disclose-row");
+    row.append(link);
+    box.append(row);
+    box.append(el("p", "demo-tx", data.transaction));
+  }
+
+  if (data.replayed) {
+    box.append(el("p", "note", "This is the answer to your earlier click. Nothing was paid twice."));
+  }
+  return box;
 }
 
 async function renderLiveStatus() {

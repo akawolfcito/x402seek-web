@@ -118,7 +118,8 @@ describe("appearance is only appearance", () => {
     for (const banned of ["connect wallet", "pay now", "private key", "seed phrase", "faucet"]) {
       expect(surface, banned).not.toContain(banned);
     }
-    expect(app.printRoutes({ commonPrefix: false })).not.toMatch(/POST|PUT|PATCH|DELETE/);
+    const routes = app.printRoutes({ commonPrefix: false });
+    expect(routes.match(/\((POST|PUT|PATCH|DELETE)\)/g) ?? []).toEqual(["(POST)"]);
     await app.close();
   });
 

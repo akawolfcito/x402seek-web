@@ -208,3 +208,95 @@ export const HOSTED_SETTLEMENT = {
   resource: "https://demo-api.testnet.x402seek.xyz/summarize",
   note: "Catalog and ownership binding survived a facilitator restart; search rehydrated from persistent state.",
 } as const;
+
+/* ---------- the bounded demo-payment proxy ----------
+ *
+ * This is the one thing in this file that is not read-only. It causes an
+ * economic side effect: x402Seek's own testnet demo buyer spends 0.001 USDC.
+ * Every other route here reads; this one triggers. Calling it read-only would
+ * be convenient and wrong.
+ *
+ * It is a proxy only in the narrow sense that it forwards to exactly one
+ * hard-coded upstream and cannot be pointed anywhere else. What crosses is two
+ * harmless fields, re-validated on the way through. No payment parameter exists
+ * in the request shape, so none can be smuggled in.
+ *
+ * The upstream is reached over Railway's private network and has no public
+ * domain, so a stranger cannot call it directly. That is a property of the
+ * topology rather than a token someone has to remember to rotate.
+ */
+
+/** Private-network address. Overridable for local development only. */
+export const DEMO_BUYER_URL =
+  process.env.DEMO_BUYER_URL?.trim() ||
+  "http://x402seek-demo-buyer-testnet.railway.internal:4430";
+
+/** Longest text this page forwards. The buyer enforces its own limit as well. */
+export const MAX_DEMO_TEXT = 500;
+
+const REFUSAL = (status: number, reason: string, detail: string) => ({
+  status,
+  body: { status: "refused" as const, reason, detail },
+});
+
+/**
+ * Forward a demo payment request, and nothing else.
+ *
+ * The buyer's own refusals are returned as they arrive, because those are
+ * already a closed set written for a visitor to read. An upstream that is
+ * unreachable becomes a refusal we wrote here, never a stack trace.
+ */
+export async function runDemoPayment(body: unknown): Promise<{ status: number; body: unknown }> {
+  const input = (body ?? {}) as Record<string, unknown>;
+  if (typeof input !== "object" || Array.isArray(input)) {
+    return REFUSAL(400, "INVALID_REQUEST", "That request was not in the expected shape.");
+  }
+
+  // Re-checked here as well as upstream, so a caller who sends a payment
+  // parameter is refused at the first hop rather than the second.
+  for (const key of Object.keys(input)) {
+    if (key !== "requestId" && key !== "text") {
+      return REFUSAL(
+        400,
+        "INVALID_REQUEST",
+        `This demo takes no payment parameters. "${key}" is not accepted.`,
+      );
+    }
+  }
+  if (input.text !== undefined && typeof input.text !== "string") {
+    return REFUSAL(400, "INVALID_REQUEST", "text must be a string.");
+  }
+  if (typeof input.text === "string" && input.text.length > MAX_DEMO_TEXT) {
+    return REFUSAL(400, "INVALID_REQUEST", `text must be ${MAX_DEMO_TEXT} characters or fewer.`);
+  }
+  if (input.requestId !== undefined && typeof input.requestId !== "string") {
+    return REFUSAL(400, "INVALID_REQUEST", "requestId must be a string.");
+  }
+
+  // Exactly two fields cross, whatever arrived.
+  const forwarded: Record<string, string> = {};
+  if (typeof input.requestId === "string") forwarded.requestId = input.requestId;
+  if (typeof input.text === "string") forwarded.text = input.text;
+
+  let response: Response;
+  try {
+    response = await fetch(`${DEMO_BUYER_URL}/demo-payment`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(forwarded),
+      signal: AbortSignal.timeout(60_000),
+    });
+  } catch {
+    return REFUSAL(
+      503,
+      "DEMO_UNAVAILABLE",
+      "The demo payment service did not answer. Live discovery and the recorded evidence still work.",
+    );
+  }
+
+  try {
+    return { status: response.status, body: await response.json() };
+  } catch {
+    return REFUSAL(502, "DEMO_UNAVAILABLE", "The demo payment service gave an unreadable answer.");
+  }
+}

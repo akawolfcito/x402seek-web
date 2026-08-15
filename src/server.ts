@@ -29,6 +29,7 @@ import {
   liveResources,
   liveSearch,
   liveStatus,
+  runDemoPayment,
 } from "./live.js";
 import { FrozenCatalogStore } from "./store.js";
 
@@ -108,7 +109,7 @@ function cleanFilter(raw: unknown): string | undefined {
 }
 
 export function buildServer() {
-  const app = Fastify({ logger: false, bodyLimit: 1024 });
+  const app = Fastify({ logger: false, bodyLimit: 2 * 1024 });
 
   /**
    * A crude fixed-window limiter, deliberately dependency-free.
@@ -184,6 +185,19 @@ export function buildServer() {
   app.get("/api/live/status", liveRoute(() => liveStatus()));
   app.get("/api/live/resources", liveRoute(() => liveResources()));
   app.get("/api/live/settlement", async () => HOSTED_SETTLEMENT);
+
+  /**
+   * The one route here that is not read-only.
+   *
+   * A bounded demo-payment proxy. It triggers a payment by x402Seek's own
+   * testnet demo buyer, at a fixed price, to a fixed seller, for a fixed
+   * resource. The browser supplies no payment parameter because the request
+   * shape has none.
+   */
+  app.post("/api/live/demo-payment", async (request, reply) => {
+    const result = await runDemoPayment(request.body);
+    return reply.code(result.status).send(result.body);
+  });
 
   app.get("/api/live/search", async (request, reply) => {
     const q = request.query as Record<string, unknown>;

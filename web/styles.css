@@ -753,3 +753,45 @@ body.live-mode .mode-band.is-down .mode-badge { color: var(--rose); }
 /* On a phone the top badge and the band under the hero say the same thing, so
    the badge yields its width to the two controls that do something. */
 @media (max-width: 700px) { .badge { display: none; } }
+
+/* ---- the demo payment ----
+   The only control on this page that costs anything. It says whose money it is
+   before it says anything else, because a page that lets someone trigger a
+   payment and is vague about custody is the one failure worth avoiding. */
+
+.demo { border-top: 1px solid var(--rule-soft); padding: 16px 18px 18px; background: var(--surface-2); }
+.demo-head h4 {
+  margin: 0 0 10px; font: 600 9px/1 var(--mono); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.demo .terms.primary { padding: 0 0 10px; border-top: 0; }
+.demo-note {
+  margin: 0 0 14px; font-size: 12.5px; color: var(--amber);
+  background: var(--amber-soft); border-left: 2px solid var(--amber);
+  padding: 8px 12px; border-radius: 0 6px 6px 0;
+}
+.demo-run { padding: 11px 20px; font-size: 14px; }
+body.live-mode .demo-run { background: var(--ok); color: var(--on-accent); }
+body.live-mode .demo-run:hover { background: var(--ok-hover); }
+.demo-run:disabled { opacity: 0.55; cursor: progress; }
+
+.demo-out { margin-top: 16px; }
+.demo-settled, .demo-refused { border-radius: 10px; padding: 16px; }
+.demo-settled { background: var(--ok-soft); border: 1px solid var(--ok-line); }
+.demo-refused { background: var(--rose-soft); border: 1px solid var(--rose-line); }
+.demo-settled h5, .demo-refused h5 {
+  margin: 0 0 10px; font-size: 15px; font-weight: 650; letter-spacing: -0.015em;
+}
+.demo-settled h5 { color: var(--ok); }
+.demo-refused h5 { color: var(--rose); }
+.demo-refused p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-2); }
+.demo-refused .code { font: 600 10px/1 var(--mono); letter-spacing: 0.06em; color: var(--rose); }
+.demo-settled .hosted-lead { margin-bottom: 12px; }
+.demo-settled .terms.primary { padding: 0 0 12px; }
+.demo-result { margin: 4px 0 12px; }
+.demo-result .k {
+  display: block; font: 600 9px/1 var(--mono); letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px;
+}
+.demo-result p { margin: 0; font-size: 13.5px; color: var(--ink); }
+.demo-tx { margin: 8px 0 0; font-family: var(--mono); font-size: 11px; color: var(--ink-3); word-break: break-all; }

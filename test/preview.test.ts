@@ -136,9 +136,12 @@ describe("the public surface", () => {
     }
   });
 
-  it("registers only GET handlers", () => {
+  it("registers exactly one non-GET handler, the bounded demo-payment proxy", () => {
+    // This invariant was "none" until the demo payment shipped. It is now a
+    // count, so a second write route has to be argued for rather than slipped in.
     const routes = app.printRoutes({ commonPrefix: false });
-    expect(routes).not.toMatch(/POST|PUT|PATCH|DELETE/);
+    expect(routes.match(/\((POST|PUT|PATCH|DELETE)\)/g) ?? []).toEqual(["(POST)"]);
+    expect(routes).toContain("demo-payment");
   });
 
   it("serves health without claiming to settle", async () => {

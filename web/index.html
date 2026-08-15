@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>x402Seek · decision-grade discovery for x402 on Stellar</title>
 <meta name="description" content="Agents describe what they need. x402Seek recommends a payable service, or recommends none. Decision-grade discovery for autonomous x402 payments on Stellar.">
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem("x402seek-theme");
+      if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+    } catch (e) { /* private mode: fall back to the system preference */ }
+  })();
+</script>
+<meta name="color-scheme" content="light dark">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -30,6 +39,17 @@
       <a href="#status">Status</a>
     </nav>
     <span class="net"><span class="k">NETWORK</span> stellar:testnet <i class="dot" aria-hidden="true"></i></span>
+    <div class="theme" role="group" aria-label="Appearance">
+      <button class="tbtn is-active" id="theme-system" aria-pressed="true" title="Match system appearance">
+        <span aria-hidden="true">◐</span><span class="sr-only">Match system appearance</span>
+      </button>
+      <button class="tbtn" id="theme-light" aria-pressed="false" title="Light appearance">
+        <span aria-hidden="true">☀</span><span class="sr-only">Light appearance</span>
+      </button>
+      <button class="tbtn" id="theme-dark" aria-pressed="false" title="Dark appearance">
+        <span aria-hidden="true">☾</span><span class="sr-only">Dark appearance</span>
+      </button>
+    </div>
   </div>
 </header>
 

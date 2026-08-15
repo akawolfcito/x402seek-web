@@ -778,6 +778,54 @@ async function setMode(mode) {
   await search($("#q").value);
 }
 
+
+/* ---------- appearance ----------
+ *
+ * Three states and one rule: "system" stores nothing and sets no attribute, so
+ * the page keeps following the operating system for as long as the reader has
+ * not overridden it. An explicit choice writes `data-theme` on <html>, which
+ * the stylesheet honours over the media query in both directions.
+ *
+ * This touches colour and nothing else. It never reads or writes MODE, never
+ * refetches, and never changes what the page says.
+ */
+
+const THEME_KEY = "x402seek-theme";
+
+function readTheme() {
+  try {
+    const stored = localStorage.getItem(THEME_KEY);
+    return stored === "light" || stored === "dark" ? stored : "system";
+  } catch {
+    return "system";
+  }
+}
+
+function applyTheme(theme) {
+  if (theme === "system") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", theme);
+
+  for (const name of ["system", "light", "dark"]) {
+    const button = $(`#theme-${name}`);
+    button.classList.toggle("is-active", name === theme);
+    button.setAttribute("aria-pressed", String(name === theme));
+  }
+}
+
+function setTheme(theme) {
+  try {
+    // "system" is the absence of a preference, so it is stored as an absence.
+    if (theme === "system") localStorage.removeItem(THEME_KEY);
+    else localStorage.setItem(THEME_KEY, theme);
+  } catch { /* private mode: the choice holds for this page only */ }
+  applyTheme(theme);
+}
+
+for (const name of ["system", "light", "dark"]) {
+  $(`#theme-${name}`).addEventListener("click", () => setTheme(name));
+}
+applyTheme(readTheme());
+
 /* ---------- wire up ---------- */
 
 $("#mode-evidence").addEventListener("click", () => setMode("evidence"));

@@ -180,6 +180,83 @@ describe("failures stay inside the closed set", () => {
   });
 });
 
+describe("SR-01: two visitors are two visitors", () => {
+  /**
+   * Driven through `x-forwarded-for`, not `remoteAddress`.
+   *
+   * That distinction is the whole finding. The previous tests set the socket
+   * address directly, which is the one condition production does not have:
+   * behind Railway the socket is Railway, and every visitor collapsed into one
+   * bucket. A test that sets remoteAddress can never catch this.
+   */
+  const visit = (payload: unknown, forwarded: string) =>
+    app.inject({
+      method: "POST",
+      url: "/api/live/demo-payment",
+      payload: payload as never,
+      headers: { "x-forwarded-for": `${forwarded}, 10.42.0.9` },
+    });
+
+  it("gives two forwarded visitors different buckets", async () => {
+    await visit({ requestId: "alice-1" }, "203.0.113.1");
+    await visit({ requestId: "bob-1" }, "198.51.100.1");
+
+    const sent = fetchMock.mock.calls.map(
+      ([, init]) => JSON.parse(String((init as RequestInit).body)).clientKey,
+    );
+    expect(sent).toHaveLength(2);
+    expect(sent[0]).not.toBe(sent[1]);
+    expect(sent[0]).toMatch(/^[a-f0-9]{16}$/);
+  });
+
+  it("gives the same visitor the same bucket across requests", async () => {
+    await visit({ requestId: "alice-1" }, "203.0.113.2");
+    await visit({ requestId: "alice-2" }, "203.0.113.2");
+    const sent = fetchMock.mock.calls.map(
+      ([, init]) => JSON.parse(String((init as RequestInit).body)).clientKey,
+    );
+    expect(sent[0]).toBe(sent[1]);
+  });
+
+  it("cannot be made to select another visitor's bucket by prepending a value", async () => {
+    // Fastify counts hops back from the socket, so with trustProxy: 2 an entry
+    // a caller prepends is never the one resolved. Spoofing fails by
+    // construction, not by trusting the proxy to strip headers.
+    await visit({ requestId: "alice-1" }, "203.0.113.3");
+    const alice = JSON.parse(
+      String((fetchMock.mock.calls[0] as [string, RequestInit])[1].body),
+    ).clientKey;
+
+    fetchMock.mockClear();
+    await app.inject({
+      method: "POST",
+      url: "/api/live/demo-payment",
+      payload: { requestId: "mallory-1" } as never,
+      headers: { "x-forwarded-for": "203.0.113.3, 198.51.100.66, 10.42.0.9" },
+    });
+    const mallory = JSON.parse(
+      String((fetchMock.mock.calls[0] as [string, RequestInit])[1].body),
+    ).clientKey;
+
+    expect(mallory).not.toBe(alice);
+  });
+
+  it("still refuses a clientKey the browser tried to choose", async () => {
+    const response = await visit({ clientKey: "deadbeefdeadbeef" }, "203.0.113.4");
+    expect(response.statusCode).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("limits per visitor, not globally", async () => {
+    for (let i = 0; i < 3; i += 1) {
+      expect((await visit({ requestId: `a-${i}` }, "203.0.113.20")).statusCode).toBe(200);
+    }
+    expect((await visit({ requestId: "a-9" }, "203.0.113.20")).json().reason).toBe("RATE_LIMITED");
+    // A different visitor is unaffected, which is the property that was broken.
+    expect((await visit({ requestId: "b-1" }, "198.51.100.30")).statusCode).toBe(200);
+  });
+});
+
 describe("the route surface", () => {
   it("has exactly one non-GET route, and it is the demo payment", () => {
     const routes = app.printRoutes({ commonPrefix: false });

@@ -139,7 +139,33 @@ class DemoLimiter {
 }
 
 export function buildServer() {
-  const app = Fastify({ logger: false, bodyLimit: 2 * 1024 });
+  /**
+   * `trustProxy: 2`, and the number is measured rather than guessed.
+   *
+   * SR-01: without this, `request.ip` was the socket peer, which behind
+   * Railway's edge is Railway. Every visitor on the internet shared one bucket,
+   * so the per-visitor rate limit was global and the demo buyer's duplicate
+   * guard could hand one visitor another's transaction hash and seller result.
+   *
+   * Railway was measured to send exactly two `x-forwarded-for` entries: the
+   * first is the real client, the second an internal address that changes per
+   * request. Client-supplied entries are discarded, verified by injecting five
+   * and still receiving two.
+   *
+   * Fastify counts hops back from the socket, so:
+   *
+   *   `trustProxy: 1`    lands on the internal hop, a different value every
+   *                      request. Worse than the defect: no bucket at all.
+   *   `trustProxy: 2`    lands on the real client, and an entry prepended by a
+   *                      caller is never reached, so spoofing fails by
+   *                      construction rather than by trusting Railway to strip.
+   *   `trustProxy: 3`    a prepended value wins. Unsafe.
+   *   `trustProxy: true` same. Unsafe.
+   *
+   * If Railway ever changes its forwarding shape this number must be
+   * re-measured. The diagnostic that measured it is in the history at 2605cb5.
+   */
+  const app = Fastify({ logger: false, bodyLimit: 2 * 1024, trustProxy: 2 });
   const demoLimiter = new DemoLimiter();
 
   /**
@@ -166,26 +192,6 @@ export function buildServer() {
     if (entry.count > MAX_PER_WINDOW) {
       return reply.code(429).send({ error: "rate limited, try again shortly" });
     }
-  });
-
-  // TEMPORARY DIAGNOSTIC for SR-01. Removed before the remediation commit.
-  // Returns shapes and hashed buckets only, never a raw address.
-  app.get("/__sr01", async (request) => {
-    const { createHash } = await import("node:crypto");
-    const h = (v: string) => createHash("sha256").update(v).digest("hex").slice(0, 8);
-    const xff = String(request.headers["x-forwarded-for"] ?? "");
-    const parts = xff ? xff.split(",").map((p) => p.trim()) : [];
-    return {
-      xffPresent: xff.length > 0,
-      xffCount: parts.length,
-      xffHashes: parts.map(h),
-      socketHash: h(String(request.socket.remoteAddress ?? "")),
-      reqIpHash: h(request.ip),
-      reqIpEqualsSocket: request.ip === request.socket.remoteAddress,
-      otherForwardHeaders: Object.keys(request.headers).filter((k) =>
-        k.startsWith("x-forwarded") || k === "forwarded" || k.startsWith("x-real"),
-      ),
-    };
   });
 
   app.get("/health", async () => ({

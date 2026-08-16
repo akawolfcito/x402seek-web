@@ -168,6 +168,26 @@ export function buildServer() {
     }
   });
 
+  // TEMPORARY DIAGNOSTIC for SR-01. Removed before the remediation commit.
+  // Returns shapes and hashed buckets only, never a raw address.
+  app.get("/__sr01", async (request) => {
+    const { createHash } = await import("node:crypto");
+    const h = (v: string) => createHash("sha256").update(v).digest("hex").slice(0, 8);
+    const xff = String(request.headers["x-forwarded-for"] ?? "");
+    const parts = xff ? xff.split(",").map((p) => p.trim()) : [];
+    return {
+      xffPresent: xff.length > 0,
+      xffCount: parts.length,
+      xffHashes: parts.map(h),
+      socketHash: h(String(request.socket.remoteAddress ?? "")),
+      reqIpHash: h(request.ip),
+      reqIpEqualsSocket: request.ip === request.socket.remoteAddress,
+      otherForwardHeaders: Object.keys(request.headers).filter((k) =>
+        k.startsWith("x-forwarded") || k === "forwarded" || k.startsWith("x-real"),
+      ),
+    };
+  });
+
   app.get("/health", async () => ({
     status: "ok",
     service: "x402seek-preview",

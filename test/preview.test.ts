@@ -302,10 +302,14 @@ describe("the public surface", () => {
 
   it("says ownership and network in words, keeping the protocol values", async () => {
     const script = (await app.inject({ method: "GET", url: "/app.js" })).body;
-    expect(script).toContain("Ownership verified");
+    // "Ownership verified" was retired: it flattered trust-on-first-use once
+    // domain binding gave that phrase a stronger meaning.
+    expect(script).toContain("Ownership: first use");
+    expect(script).toContain("Domain verified");
     expect(script).toContain("Stellar Testnet");
     // TOFU and the raw ids are explained rather than erased.
-    expect(script).toContain("TOFU ownership binding");
+    // TOFU is still explained in the tooltip; only its headline label changed.
+    expect(script).toContain("Trust on first use");
     expect(script).toContain("stellar:testnet");
     expect(script).toContain("base units");
     expect(script).toContain("Asset contract");

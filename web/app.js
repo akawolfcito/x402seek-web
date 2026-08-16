@@ -243,11 +243,26 @@ function verdictPills(accepts, listing, relevance) {
   if (accepts.amount !== undefined) {
     row.append(pill("Payable", "ok", `${accepts.amount} base units, scheme ${accepts.scheme}.`));
   }
-  if (listing.ownershipBinding === "tofu") {
+  // Three states, and the labels are deliberately not interchangeable. Calling
+  // trust-on-first-use "verified" was too generous once a stronger state
+  // existed, and a domain that names a different payee must not look reassuring.
+  if (listing.ownershipBinding === "domain-verified") {
     row.append(pill(
-      "Ownership verified",
+      "Domain verified",
       "ok",
-      "TOFU ownership binding: bound to the payTo seen at first settlement. x402 proves who received a payment, not who controls a URL.",
+      "The controller of this resource's HTTPS origin declares it may be catalogued against this payTo on this network. This is domain control, not wallet proof, and it says nothing about whether a payment will be honoured. The live 402 is the payment authority.",
+    ));
+  } else if (listing.ownershipBinding === "domain-mismatch") {
+    row.append(pill(
+      "Domain mismatch",
+      "bad",
+      "The origin published a declaration naming a different payTo or network for this resource.",
+    ));
+  } else if (listing.ownershipBinding === "tofu") {
+    row.append(pill(
+      "Ownership: first use",
+      null,
+      "Trust on first use: bound to the payTo seen at first settlement. No proof of URL control. x402 proves who received a payment, not who controls a URL.",
     ));
   } else if (listing.ownershipBinding) {
     row.append(pill(listing.ownershipBinding, null));

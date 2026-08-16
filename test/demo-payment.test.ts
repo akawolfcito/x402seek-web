@@ -197,6 +197,17 @@ describe("the route surface", () => {
 });
 
 describe("the browser surface", () => {
+  it("labels the three ownership states without flattering the weakest", () => {
+    expect(script).toContain("Domain verified");
+    expect(script).toContain("Domain mismatch");
+    expect(script).toContain("Ownership: first use");
+    // The old label promoted trust-on-first-use to something it was not.
+    expect(script).not.toContain('"Ownership verified"');
+    // And domain control is never presented as permission to pay.
+    expect(script).toContain("domain control, not wallet proof");
+    expect(script).toContain("The live 402 is the payment authority");
+  });
+
   it("says whose money it is before it says anything else", () => {
     expect(script).toContain("Run demo payment");
     expect(script).toContain("You are not paying. x402Seek's testnet demo account pays.");

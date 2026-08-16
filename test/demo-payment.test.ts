@@ -15,7 +15,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEMO_BUYER_URL, MAX_DEMO_TEXT, runDemoPayment } from "../src/live.js";
+import { DEMO_BUYER_URL, MAX_DEMO_TEXT, clientKeyFor, runDemoPayment } from "../src/live.js";
 import { buildServer } from "../src/server.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -47,8 +47,21 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-const post = (payload: unknown) =>
-  app.inject({ method: "POST", url: "/api/live/demo-payment", payload: payload as never });
+/**
+ * A distinct visitor per call by default.
+ *
+ * The per-visitor limit is real now, so tests that are not about rate limiting
+ * must not share a bucket with each other. The one test that *is* about it
+ * passes an explicit address.
+ */
+let visitor = 0;
+const post = (payload: unknown, ip?: string) =>
+  app.inject({
+    method: "POST",
+    url: "/api/live/demo-payment",
+    payload: payload as never,
+    remoteAddress: ip ?? `198.51.${Math.floor(visitor / 250) % 250}.${(visitor++ % 250) + 1}`,
+  });
 
 describe("the browser controls nothing about the payment", () => {
   it.each([
@@ -77,7 +90,11 @@ describe("the browser controls nothing about the payment", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(`${DEMO_BUYER_URL}/demo-payment`);
-    expect(JSON.parse(String(init.body))).toEqual({ requestId: "abc-123", text: "condense this" });
+    const sent = JSON.parse(String(init.body));
+    expect(sent.requestId).toBe("abc-123");
+    expect(sent.text).toBe("condense this");
+    // clientKey is derived here, never taken from the body.
+    expect(Object.keys(sent).sort()).toEqual(["clientKey", "requestId", "text"]);
   });
 
   it("cannot be pointed anywhere by a caller", () => {
@@ -85,6 +102,29 @@ describe("the browser controls nothing about the payment", () => {
     // shape of the function is the closest thing to proving the negative.
     expect(DEMO_BUYER_URL).toContain("railway.internal");
     expect(DEMO_BUYER_URL).not.toContain("x402seek.xyz");
+  });
+
+  it("derives the visitor key itself and refuses one from the body", async () => {
+    // The demo buyer sits behind this proxy, so it only ever sees this service
+    // as the peer. Without a key derived here its per-IP limit limits nothing,
+    // which is what the production ledger showed. Accepting one from the body
+    // would hand the limit back to the caller.
+    expect((await post({ clientKey: "deadbeefdeadbeef" })).statusCode).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await post({ text: "hello" });
+    const sent = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1].body));
+    expect(sent.clientKey).toMatch(/^[a-f0-9]{16}$/);
+  });
+
+  it("gives two visitors different keys and the same visitor a stable one", () => {
+    expect(clientKeyFor("203.0.113.9")).toBe(clientKeyFor("203.0.113.9"));
+    expect(clientKeyFor("203.0.113.9")).not.toBe(clientKeyFor("198.51.100.4"));
+    // A whole IPv6 /64 is one subscriber.
+    expect(clientKeyFor("2001:db8:1:2::1")).toBe(clientKeyFor("2001:db8:1:2:ffff::9"));
+    expect(clientKeyFor("2001:db8:1:3::1")).not.toBe(clientKeyFor("2001:db8:1:2::1"));
+    // Nothing recognisable survives.
+    expect(clientKeyFor("203.0.113.9")).not.toContain("203");
   });
 
   it("bounds the one field it does forward", async () => {
@@ -210,5 +250,23 @@ describe("runDemoPayment in isolation", () => {
     await runDemoPayment({});
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(JSON.parse(String(init.body))).toEqual({});
+  });
+
+  it("refuses three an hour from one visitor, before the upstream is troubled", async () => {
+    const ip = "198.51.100.77";
+    for (let i = 0; i < 3; i += 1) {
+      const r = await app.inject({
+        method: "POST", url: "/api/live/demo-payment",
+        payload: { requestId: `p-${i}` } as never, remoteAddress: ip,
+      });
+      expect(r.statusCode, `attempt ${i}`).toBe(200);
+    }
+    const refused = await app.inject({
+      method: "POST", url: "/api/live/demo-payment",
+      payload: { requestId: "p-9" } as never, remoteAddress: ip,
+    });
+    expect(refused.statusCode).toBe(429);
+    expect(refused.json().reason).toBe("RATE_LIMITED");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });

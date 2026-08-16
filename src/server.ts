@@ -29,7 +29,9 @@ import {
   liveResources,
   liveSearch,
   liveStatus,
+  clientKeyFor,
   runDemoPayment,
+  validateDemoBody,
 } from "./live.js";
 import { FrozenCatalogStore } from "./store.js";
 
@@ -108,8 +110,37 @@ function cleanFilter(raw: unknown): string | undefined {
   return value.length > 0 && value.length <= 64 ? value : undefined;
 }
 
+/**
+ * Three demo payments an hour per visitor, matching the buyer's own limit.
+ *
+ * Enforced here because this is the only place a visitor is distinguishable:
+ * the buyer sees this proxy and nothing else. Fixed window, in memory, and that
+ * is enough — the buyer keeps its own global limit and the spend ledger behind
+ * it, so this is the polite first refusal rather than the last one.
+ */
+class DemoLimiter {
+  private readonly windows = new Map<string, { count: number; resetAt: number }>();
+  private readonly limit = 3;
+  private readonly windowMs = 60 * 60 * 1000;
+
+  check(key: string): { allowed: boolean; retryAfterSeconds: number } {
+    const now = Date.now();
+    const existing = this.windows.get(key);
+    if (!existing || now >= existing.resetAt) {
+      this.windows.set(key, { count: 1, resetAt: now + this.windowMs });
+      return { allowed: true, retryAfterSeconds: 0 };
+    }
+    if (existing.count >= this.limit) {
+      return { allowed: false, retryAfterSeconds: Math.ceil((existing.resetAt - now) / 1000) };
+    }
+    existing.count += 1;
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+}
+
 export function buildServer() {
   const app = Fastify({ logger: false, bodyLimit: 2 * 1024 });
+  const demoLimiter = new DemoLimiter();
 
   /**
    * A crude fixed-window limiter, deliberately dependency-free.
@@ -195,7 +226,23 @@ export function buildServer() {
    * shape has none.
    */
   app.post("/api/live/demo-payment", async (request, reply) => {
-    const result = await runDemoPayment(request.body);
+    // The per-visitor identity exists here and nowhere downstream, so the first
+    // line of the rate limit lives here too.
+    // Shape first: a malformed request is answered without costing the visitor
+    // a slot, so a broken client cannot lock a real one out.
+    const checked = validateDemoBody(request.body);
+    if (!checked.ok) return reply.code(checked.refusal.status).send(checked.refusal.body);
+
+    const key = clientKeyFor(request.ip);
+    const decision = demoLimiter.check(key);
+    if (!decision.allowed) {
+      return reply.code(429).header("retry-after", String(decision.retryAfterSeconds)).send({
+        status: "refused",
+        reason: "RATE_LIMITED",
+        detail: "Too many demo payments from here. Try again shortly.",
+      });
+    }
+    const result = await runDemoPayment(request.body, key);
     return reply.code(result.status).send(result.body);
   });
 

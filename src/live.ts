@@ -209,6 +209,8 @@ export const HOSTED_SETTLEMENT = {
   note: "Catalog and ownership binding survived a facilitator restart; search rehydrated from persistent state.",
 } as const;
 
+import { createHash } from "node:crypto";
+
 /* ---------- the bounded demo-payment proxy ----------
  *
  * This is the one thing in this file that is not read-only. It causes an
@@ -246,37 +248,61 @@ const REFUSAL = (status: number, reason: string, detail: string) => ({
  * already a closed set written for a visitor to read. An upstream that is
  * unreachable becomes a refusal we wrote here, never a stack trace.
  */
-export async function runDemoPayment(body: unknown): Promise<{ status: number; body: unknown }> {
+/**
+ * Check the shape, and say what would be forwarded.
+ *
+ * Separate from the request so the route can refuse a malformed body *before*
+ * charging the visitor a rate-limit slot. A 400 is our answer to a bad request,
+ * not a reason to spend their quota.
+ */
+export function validateDemoBody(
+  body: unknown,
+): { ok: true; forwarded: Record<string, string> } | { ok: false; refusal: { status: number; body: unknown } } {
   const input = (body ?? {}) as Record<string, unknown>;
+  const bad = (detail: string) => ({ ok: false as const, refusal: REFUSAL(400, "INVALID_REQUEST", detail) });
+
   if (typeof input !== "object" || Array.isArray(input)) {
-    return REFUSAL(400, "INVALID_REQUEST", "That request was not in the expected shape.");
+    return bad("That request was not in the expected shape.");
   }
 
   // Re-checked here as well as upstream, so a caller who sends a payment
-  // parameter is refused at the first hop rather than the second.
+  // parameter is refused at the first hop rather than the second. `clientKey`
+  // is deliberately absent: this service derives it, never accepts it.
   for (const key of Object.keys(input)) {
     if (key !== "requestId" && key !== "text") {
-      return REFUSAL(
-        400,
-        "INVALID_REQUEST",
-        `This demo takes no payment parameters. "${key}" is not accepted.`,
-      );
+      return bad(`This demo takes no payment parameters. "${key}" is not accepted.`);
     }
   }
-  if (input.text !== undefined && typeof input.text !== "string") {
-    return REFUSAL(400, "INVALID_REQUEST", "text must be a string.");
-  }
+  if (input.text !== undefined && typeof input.text !== "string") return bad("text must be a string.");
   if (typeof input.text === "string" && input.text.length > MAX_DEMO_TEXT) {
-    return REFUSAL(400, "INVALID_REQUEST", `text must be ${MAX_DEMO_TEXT} characters or fewer.`);
+    return bad(`text must be ${MAX_DEMO_TEXT} characters or fewer.`);
   }
   if (input.requestId !== undefined && typeof input.requestId !== "string") {
-    return REFUSAL(400, "INVALID_REQUEST", "requestId must be a string.");
+    return bad("requestId must be a string.");
   }
 
-  // Exactly two fields cross, whatever arrived.
+  // Exactly three fields cross, and only two of them came from the caller.
+  //
+  // `clientKey` is derived here, from the peer address of the real browser
+  // request, and never accepted from the body. It exists because the demo buyer
+  // sits behind this proxy on a private network: the only peer it ever sees is
+  // this service, so every visitor arrived in the same bucket and its per-IP
+  // limit limited nothing. Observed in the ledger, not theorised.
   const forwarded: Record<string, string> = {};
   if (typeof input.requestId === "string") forwarded.requestId = input.requestId;
   if (typeof input.text === "string") forwarded.text = input.text;
+  return { ok: true, forwarded };
+}
+
+/** Forward a validated demo payment request, and nothing else. */
+export async function runDemoPayment(
+  body: unknown,
+  clientKey?: string,
+): Promise<{ status: number; body: unknown }> {
+  const checked = validateDemoBody(body);
+  if (!checked.ok) return checked.refusal;
+
+  const forwarded = { ...checked.forwarded, ...(clientKey ? { clientKey } : {}) };
 
   let response: Response;
   try {
@@ -299,4 +325,22 @@ export async function runDemoPayment(body: unknown): Promise<{ status: number; b
   } catch {
     return REFUSAL(502, "DEMO_UNAVAILABLE", "The demo payment service gave an unreadable answer.");
   }
+}
+
+
+/**
+ * A stable, non-identifying key for one visitor.
+ *
+ * IPv6 is collapsed to a /64 because a subscriber is routinely handed a whole
+ * one, then hashed, so nothing downstream stores an address. The demo buyer
+ * uses this as its rate-limit bucket, which is the only way its per-IP limit
+ * can mean anything from behind a proxy.
+ */
+export function clientKeyFor(ip: string | undefined): string {
+  if (!ip) return createHash("sha256").update("unknown").digest("hex").slice(0, 16);
+  const address = ip.startsWith("::ffff:") ? ip.slice(7) : ip;
+  const bucket = address.includes(":")
+    ? `${address.split("%")[0]!.split(":").slice(0, 4).join(":")}::/64`
+    : address;
+  return createHash("sha256").update(bucket).digest("hex").slice(0, 16);
 }

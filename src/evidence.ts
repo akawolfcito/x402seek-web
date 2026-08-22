@@ -138,12 +138,20 @@ export const STATUS = {
   /**
    * Two separate facts, and both need saying.
    *
-   * The previous wording said the facilitator was not operated publicly. That
-   * was true when written and is now false, so it is gone rather than left to
-   * mislead. What remains true is that this page cannot start a payment.
+   * This sentence has now been wrong twice, in the same way both times: it kept
+   * describing a narrower service than the one that shipped. First it said the
+   * facilitator was not operated publicly, which stopped being true when it was
+   * deployed. Then it said the browser experience was read-only, which stopped
+   * being true when the bounded demo payment shipped — a page carrying a button
+   * that starts a payment cannot call itself read-only, however carefully that
+   * payment is fenced.
+   *
+   * What is true, and is what actually protects a visitor, is narrower and
+   * better: their money is never at stake and no key of theirs is ever used.
+   * That is what this says now.
    */
   disclosure:
-    "The browser experience is read-only. The hosted facilitator operates on Stellar testnet.",
+    "You never pay and never sign: the one demo payment on this page is made by x402Seek's own testnet account. The hosted facilitator operates on Stellar testnet.",
 } as const;
 
 export { explorer };

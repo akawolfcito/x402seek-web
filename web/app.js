@@ -790,7 +790,7 @@ async function renderLiveStatus() {
     );
     box.append(row);
     box.append(el("p", "note",
-      "Classic accounts only. upto is not supported yet. This page does not initiate payments."));
+      "Classic accounts only. upto is not supported yet. The only payment this page can start is the bounded demo, paid by x402Seek's own testnet account."));
     return true;
   } catch (error) {
     box.replaceChildren(liveUnavailable(error.message));

@@ -4,8 +4,9 @@
 
 Live: **<https://x402seek.xyz>**
 
-A public, read-only preview of the discovery layer built for
+A public preview of the discovery layer built for
 [SCF #45 — *X402 Facilitator with Bazaar (discovery) support*](https://communityfund.stellar.org).
+Discovery is read-only; one bounded demo payment is not, and is described below.
 It exists so a reviewer can type a sentence and watch real ranking and real
 abstention, in under a minute, without installing anything.
 
@@ -175,7 +176,7 @@ No secrets are read. Every variable has a working default.
 ### Testing and checks
 
 ```bash
-pnpm test               # 97 tests, 4 files
+pnpm test               # 99 tests, 4 files
 pnpm typecheck          # tsc --noEmit, strict + noUncheckedIndexedAccess
 pnpm audit:licenses     # exits non-zero on copyleft or unclassified
 pnpm verify:vendor      # vendored source == frozen core at the pinned commit

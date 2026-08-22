@@ -182,10 +182,10 @@ describe("the public surface", () => {
    * with nothing saying the facilitator is not operated. Caught by the local
    * reviewer smoke.
    */
-  it("states the read-only boundary in the served HTML, without running any script", async () => {
+  it("states the payment boundary in the served HTML, without running any script", async () => {
     const html = (await app.inject({ method: "GET", url: "/" })).body;
     const sentence =
-      "The browser experience is read-only. The hosted facilitator operates on Stellar testnet.";
+      "You never pay and never sign: the one demo payment on this page is made by x402Seek's own testnet account. The hosted facilitator operates on Stellar testnet.";
     // Once in the hero, once in the status section.
     expect(html.split(sentence).length - 1).toBe(2);
   });
@@ -202,6 +202,40 @@ describe("the public surface", () => {
     expect(surface).not.toContain("not currently operated");
     expect(surface).not.toContain("no settlement service is operated here");
     expect(surface).not.toContain("exposes discovery only");
+  });
+
+  /**
+   * The same failure a second time, from the other direction.
+   *
+   * These sentences were true until the bounded demo payment shipped, and then
+   * quietly were not. A visitor reading "this page does not initiate payments"
+   * on a page carrying a button that initiates a payment has been told
+   * something false by a page whose whole argument is that it does not overstate.
+   */
+  it("does not claim it cannot start a payment, because it can start exactly one", async () => {
+    const surface = [
+      (await app.inject({ method: "GET", url: "/" })).body,
+      (await app.inject({ method: "GET", url: "/app.js" })).body,
+      (await app.inject({ method: "GET", url: "/api/evidence" })).body,
+    ].join("\n");
+
+    expect(surface).not.toContain("does not initiate payments");
+    expect(surface).not.toContain("cannot initiate payments");
+    expect(surface).not.toContain("browser experience is read-only");
+  });
+
+  /**
+   * What replaced them still has to say the part that protects the visitor:
+   * their money is never at stake, and no key of theirs is ever used.
+   */
+  it("still states that the visitor neither pays nor signs", async () => {
+    const surface = [
+      (await app.inject({ method: "GET", url: "/" })).body,
+      (await app.inject({ method: "GET", url: "/api/evidence" })).body,
+    ].join("\n");
+
+    expect(surface).toContain("You never pay and never sign");
+    expect(surface).toContain("x402Seek's own testnet account");
   });
 
   it("lists hosted operation as built, not as planned", async () => {
